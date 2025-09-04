@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "rootDir": "./src",
+    "rootDir": ".",
     "outDir": "./dist",
-    "module": "nodenext",
+    "module": "NodeNext",
     "target": "esnext",
     "lib": ["esnext"],
     "types": ["node"],
@@ -16,8 +16,11 @@
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "skipLibCheck": true,
-    "moduleDetection": "force"
+    "moduleDetection": "force",
+    "forceConsistentCasingInFileNames": true
   },
+  "include": ["src/**/*", "prisma/**/*.ts"],
+  "exclude": ["node_modules"],
   "ts-node": {
     "esm": true
   }
