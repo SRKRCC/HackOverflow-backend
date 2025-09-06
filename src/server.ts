@@ -1,5 +1,6 @@
 import express from "express";
 import memberRoutes from "./routes/memberRoutes.js";
+import teamRoutes from "./routes/teamRoutes.js";
 import leaderboardRoutes from './routes/leaderboardRoutes.js';
 import { fetchLeaderboard } from './controllers/leaderboardController.js';
 
@@ -10,6 +11,8 @@ const app = express();
 app.use(express.json());
 
 app.use('/api', memberRoutes);
+
+app.use("/api", teamRoutes);
 app.use('/api', leaderboardRoutes);
 
 // Initialize leaderboard cache
