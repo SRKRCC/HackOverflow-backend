@@ -1,4 +1,4 @@
-import { PrismaClient } from '../lib/generated/prisma/index.js';
+import { PrismaClient } from "../lib/generated/prisma/index.js";
 
 const prisma = new PrismaClient();
 
@@ -6,11 +6,11 @@ async function seed() {
   console.log("Starting database seeding...");
 
   // Clear existing data
-  // await prisma.member.deleteMany();
-  // await prisma.task.deleteMany();
-  // await prisma.team.deleteMany();
-  // await prisma.problemStatement.deleteMany();
-  // await prisma.admin.deleteMany();
+  await prisma.member.deleteMany();
+  await prisma.task.deleteMany();
+  await prisma.team.deleteMany();
+  await prisma.problemStatement.deleteMany();
+  await prisma.admin.deleteMany();
 
   const ps1 = await prisma.problemStatement.create({
     data: {
@@ -140,18 +140,6 @@ async function seed() {
       email: "admin@example.com",
       password: "admin123",
     },
-  });
-
-  await prisma.task.createMany({
-    data: [
-      { title: 'Setup Project', description: 'Initialize the project structure.', round_num: 1, points: 10, teamId: team1.id },
-      { title: 'Implement Core Feature', description: 'Build the main functionality.', round_num: 2, points: 20, teamId: team1.id },
-      { title: 'Testing', description: 'Write and run tests.', round_num: 3, points: 15, teamId: team1.id },
-      { title: 'Setup Project', description: 'Initialize the project structure.', round_num: 1, points: 10, teamId: team2.id },
-      { title: 'UI Design', description: 'Design the user interface.', round_num: 2, points: 25, teamId: team2.id },
-      { title: 'Deployment', description: 'Deploy the app.', round_num: 3, points: 0, teamId: team2.id }, // Edge case: zero points
-      // Team Gamma with no tasks (edge case)
-    ],
   });
 
   console.log("Database seeded successfully!");
