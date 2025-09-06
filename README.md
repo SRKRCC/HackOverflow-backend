@@ -1,105 +1,171 @@
 # HackOverflow Backend
 
-## My Contributions
+A Node.js/Express backend application for HackOverflow with Prisma ORM and PostgreSQL database.
 
-### Task 1: Implement Leaderboard API with Caching
+## Prerequisites
 
-### Features Implemented
+- Node.js (v16 or higher)
+- npm
+- PostgreSQL database
 
-#### 1. Leaderboard API with Caching
-- **Endpoint**: `GET /api/leaderboard`
-- **Functionality**: Returns teams sorted by total points in descending order
-- **Caching**: In-memory cache using `node-cache` with 5-minute TTL
-- **Auto-refresh**: Cache updates automatically every 5 minutes via `setInterval`
-- **Fallback**: If cache is empty, fetches fresh data from database
+## Getting Started
 
-#### 2. Database Seeding Script
-- **File**: `prisma/seed.ts`
-- **Purpose**: Populates database with sample data for testing
-- **Data Included**:
-  - 2 Problem Statements (AI/ML and Sustainability categories)
-  - 3 Teams (Alpha, Beta, Gamma) with varying task counts
-  - Tasks with different point values (including 0 points edge case)
-  - Team Gamma with no tasks (edge case for 0 total points)
-  - Sample Members assigned to teams
-- **Execution**: `npm run db:seed`
+### 1. Clone the Repository
 
-#### 3. Configuration and Dependency Management
-- **Dependencies Added**:
-  - `node-cache`: For in-memory caching
-  - `@types/node-cache`: TypeScript types
-  - `tsx`: For running TypeScript in ES modules
-  - `@types/node`: Node.js type definitions
-- **Scripts Updated**:
-  - `dev`: Fixed to use `tsx` for proper ES module support
-  - `db:seed`: Added for running seeding script
-- **TypeScript Configuration**:
-  - Updated `tsconfig.json` to include `prisma/**/*.ts`
-  - Changed `rootDir` to support files outside `src/`
-  - Removed `prisma` from exclude to enable type checking
-
-### Technical Implementation
-
-#### Leaderboard Logic
-```typescript
-// Fetch and cache leaderboard data
-export const fetchLeaderboard = async (): Promise<void> => {
-  const teams = await prisma.team.findMany({
-    include: { tasks: true },
-  });
-  
-  const leaderboard = teams.map(team => ({
-    id: team.id,
-    title: team.title,
-    totalPoints: team.tasks.reduce((sum, task) => sum + task.points, 0),
-  }));
-  
-  leaderboard.sort((a, b) => b.totalPoints - a.totalPoints);
-  cache.set('leaderboard', leaderboard);
-};
+```bash
+git clone <repository-url>
 ```
 
-#### Cache Management
-- **Initialization**: Cache populated on server startup
-- **Periodic Refresh**: Every 5 minutes using `setInterval`
-- **TTL**: 5 minutes (300 seconds)
-- **Logging**: Console logs for cache updates with timestamps
+### 2. Install Dependencies
 
-#### Database Schema Integration
-- **Prisma Query**: Efficiently fetches teams with related tasks
-- **Point Calculation**: Aggregates task points per team
-- **Sorting**: Descending order by total points
-- **Edge Cases**: Handles teams with no tasks (0 points)
+```bash
+npm install
+```
 
-### Usage Instructions
+### 3. Environment Setup
 
-#### Running the Server
+The project uses a `.env` file for configuration. The following environment variables are required:
+
+```env
+PORT=3000
+DATABASE_URL="your-database-connection-string"
+```
+
+### 4. Database Setup
+
+#### Generate Prisma Client
+
+```bash
+npx prisma generate --no-engine
+```
+
+#### Push Database Schema
+
+```bash
+npm run db:push
+```
+
+This will create all the necessary tables in your database based on the Prisma schema.
+
+#### Seed the Database (Optional)
+
+Populate the database with sample data:
+
+```bash
+npm run db:seed
+```
+
+### 5. Run the Application
+
+#### Development Mode
+
 ```bash
 npm run dev
 ```
-- Server starts on port 3000
-- Cache initializes automatically
-- Console shows cache update timestamps
 
-#### Testing the Leaderboard API
+The server will start on `http://localhost:3000` with hot reloading enabled.
+
+#### Production Build
+
 ```bash
-# Test the API endpoint
-curl http://localhost:3000/api/leaderboard
-
-# Expected response format:
-[
-  {"id": 1, "title": "Team Alpha", "totalPoints": 45},
-  {"id": 2, "title": "Team Beta", "totalPoints": 35},
-  {"id": 3, "title": "Team Gamma", "totalPoints": 0}
-]
+npm run build
+npm start
 ```
 
-#### Database Seeding
-```bash
-# Populate database with sample data
-npm run db:seed
+## Available Scripts
 
-# Verify data with Prisma Studio
+- `npm run dev` - Start development server with hot reloading
+- `npm run build` - Build the application for production
+- `npm start` - Start the production server
+- `npm run db:push` - Push database schema to database
+- `npm run db:migrate` - Run database migrations
+- `npm run db:seed` - Seed database with sample data
+
+## API Endpoints
+
+### Members
+- `GET /api/members` - Get all members
+- `POST /api/members` - Create a new member
+- `GET /api/members/:id` - Get member by ID
+- `PUT /api/members/:id` - Update member
+- `DELETE /api/members/:id` - Delete member
+
+### Teams
+- `GET /api/teams` - Get all teams
+- `POST /api/teams` - Create a new team
+- `GET /api/teams/:id` - Get team by ID
+- `PUT /api/teams/:id` - Update team
+- `DELETE /api/teams/:id` - Delete team
+
+### Leaderboard
+- `GET /api/leaderboards` - Get leaderboard with caching
+
+### Tasks
+- `GET /api/tasks` - Get all tasks
+- `POST /api/tasks` - Create a new task
+- `GET /api/tasks/:id` - Get task by ID
+- `PUT /api/tasks/:id` - Update task
+- `DELETE /api/tasks/:id` - Delete task
+
+## Project Structure
+
+```
+server/
+├── src/
+│   ├── controllers/     # Route controllers
+│   ├── models/         # Data models
+│   ├── routes/         # API routes
+│   └── server.ts       # Main server file
+├── prisma/
+│   ├── schema.prisma   # Database schema
+│   ├── seed.ts         # Database seeding script
+│   └── migrations/     # Database migrations
+├── lib/
+│   └── generated/      # Generated Prisma client
+├── .env                # Environment variables
+├── package.json        # Dependencies and scripts
+└── tsconfig.json       # TypeScript configuration
+```
+
+## Technologies Used
+
+- **Node.js** - Runtime environment
+- **Express.js** - Web framework
+- **TypeScript** - Type safety
+- **Prisma** - ORM and database toolkit
+- **PostgreSQL** - Database
+- **Node Cache** - In-memory caching
+- **ESLint** - Code linting
+
+## Development Notes
+
+- The application uses ES modules (`"type": "module"` in package.json)
+- TypeScript compilation target is ESNext
+- Database queries are optimized with Prisma
+- Leaderboard data is cached for 5 minutes
+- Hot reloading is enabled in development mode
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Port already in use**: Change the `PORT` in `.env` file
+2. **Database connection error**: Verify `DATABASE_URL` in `.env` file
+3. **Prisma client not found**: Run `npx prisma generate`
+4. **Build errors**: Ensure all dependencies are installed with `npm install`
+
+### Database Issues
+
+If you encounter database-related errors:
+
+```bash
+# Reset database
+npm run db:push
+
+# Regenerate Prisma client
+npx prisma generate
+
+# View database in browser
 npx prisma studio
 ```
 
