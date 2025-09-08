@@ -14,41 +14,51 @@ async function seed() {
 
   const ps1 = await prisma.problemStatement.create({
     data: {
+      psId: "HO001",
       title: "AI-powered Crop Monitoring",
       description: "Build an AI system to detect crop diseases from images.",
       category: "Agriculture",
+      tags: ["AI", "Machine Learning", "Agriculture"],
     },
   });
 
   const ps2 = await prisma.problemStatement.create({
     data: {
+      psId: "HO002",
       title: "Smart Waste Management",
       description: "IoT-based system for tracking and managing waste bins.",
       category: "Environment",
+      tags: ["IoT", "Environment", "Sustainability"],
     },
   });
 
   const ps3 = await prisma.problemStatement.create({
     data: {
+      psId: "HO003",
       title: "Energy Optimization in Smart Homes",
       description: "Develop a system to optimize electricity usage in smart homes.",
       category: "Energy",
+      tags: ["Smart Home", "Energy", "IoT"],
     },
   });
 
   const ps4 = await prisma.problemStatement.create({
     data: {
+      psId: "HO004",
       title: "AI Tutor for Students",
       description: "An AI-powered tutor to help students with personalized learning.",
       category: "Education",
+      tags: ["AI", "Education", "Personalization"],
     },
   });
 
   const ps5 = await prisma.problemStatement.create({
     data: {
+      psId: "HO005",
       title: "Flood Prediction System",
       description: "Develop an ML-based flood prediction and alerting system.",
       category: "Disaster Management",
+      tags: ["Machine Learning", "Disaster Management", "Environment"],
     },
   });
 

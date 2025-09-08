@@ -41,9 +41,11 @@ model Team {
 
 model ProblemStatement {
   id          Int    @id @default(autoincrement())
+  psId        String
   title       String
   description String
   category    String
+  tags        String[]
 
   Team Team[]
 }
