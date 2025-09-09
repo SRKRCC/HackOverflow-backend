@@ -7,6 +7,6 @@ const router = Router();
 
 router.use(logger);
 
-router.get("/:teamId/members", validateTeamId, getDetails);
+router.get("/:teamId", validateTeamId, getDetails);
 
 export default router;
