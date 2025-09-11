@@ -2,3 +2,4 @@ node_modules/
 /lib/generated/prisma
 .env
 dist/
+api testing/

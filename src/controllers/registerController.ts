@@ -1,5 +1,5 @@
-import type { Request, Response } from 'express';
 import { PrismaClient } from '../../lib/generated/prisma/index.js';
+import type { Request, Response } from 'express';
 import { generatePassword, generateUniqueSccId } from '../utils/registration.js';
 
 const prisma = new PrismaClient();
@@ -7,20 +7,33 @@ const prisma = new PrismaClient();
 /**
  * Expected payload shape (JSON):
  * {
- *  lead: { name, email, phone_number, profile_image?, department?, college_name, year_of_study?, location? },
- *  members: [{ name, email, phone_number, ... }],
- *  problemStatement: { id? (ps id), title?, category?, description? },
- *  gallery_images?: string[]
+ *  data: {
+ *    team: { title: string, gallery_images?: string[] },
+ *    lead: { name, email, phone_number, profile_image?, department?, college_name, year_of_study?, location? },
+ *    members: [{ name, email, phone_number, profile_image?, department?, college_name, year_of_study?, location? }],
+ *    problemStatement: { id?: number } OR { title, category, description, tags: string[] }
+ *  }
  * }
  */
 export async function registerTeam(req: Request, res: Response) {
   console.log('Register route hit');
   try {
-    const { lead, members = [], problemStatement, gallery_images = [] } = req.body;
+    const { data } = req.body;
+    
+    if (!data) {
+      return res.status(400).json({ error: 'Missing data object in request body' });
+    }
 
-    // Basic validation
+    const { team, lead, members = [], problemStatement } = data;
+
+    // Validate team data
+    if (!team || !team.title) {
+      return res.status(400).json({ error: 'Missing required team title' });
+    }
+
+    // Basic validation for lead
     if (!lead || !lead.name || !lead.email || !lead.phone_number || !lead.college_name) {
-      return res.status(400).json({ error: 'Missing required lead fields' });
+      return res.status(400).json({ error: 'Missing required lead fields (name, email, phone_number, college_name)' });
     }
 
     // Ensure lead email not already used
@@ -32,31 +45,50 @@ export async function registerTeam(req: Request, res: Response) {
     // Check duplicate emails among provided members (including lead)
     const emails = [lead.email, ...members.map((m: any) => m.email)];
     const dup = emails.find((e, i) => emails.indexOf(e) !== i);
-    if (dup) return res.status(400).json({ error: `Duplicate email in payload: ${dup}` });
+    if (dup) {
+      return res.status(400).json({ error: `Duplicate email found: ${dup}` });
+    }
 
     // Check any existing member emails in DB
     const existingMembers = await prisma.member.findMany({ where: { email: { in: emails } } });
     if (existingMembers.length > 0) {
-      return res.status(409).json({ error: 'One or more emails already registered', emails: existingMembers.map(m => m.email) });
+      return res.status(409).json({ 
+        error: 'One or more emails already registered', 
+        existing: existingMembers.map(m => m.email) 
+      });
     }
 
     // Handle problem statement: if id provided use existing, otherwise create new
-    let psId: number | null = null;
+    let psId: number;
     if (problemStatement) {
       if (problemStatement.id) {
-        const existing = await prisma.problemStatement.findUnique({ where: { id: Number(problemStatement.id) } });
-        if (!existing) return res.status(400).json({ error: 'Provided problemStatement.id not found' });
-        psId = existing.id;
-      } else if (problemStatement.title) {
-        const created = await prisma.problemStatement.create({ data: {
-          psId: problemStatement.psId ?? `PS-${Date.now()}`,
-          title: problemStatement.title,
-          category: problemStatement.category ?? 'Uncategorized',
-          description: problemStatement.description ?? '',
-          tags: problemStatement.tags ?? [],
-        }});
-        psId = created.id;
+        // Use existing problem statement
+        const existingPs = await prisma.problemStatement.findUnique({ 
+          where: { id: problemStatement.id } 
+        });
+        if (!existingPs) {
+          return res.status(400).json({ error: 'Problem statement with provided ID not found' });
+        }
+        psId = problemStatement.id;
+      } else if (problemStatement.title && problemStatement.category && problemStatement.description) {
+        // Create new problem statement
+        const newPs = await prisma.problemStatement.create({
+          data: {
+            psId: `PS-${Date.now()}`, // Generate unique psId
+            title: problemStatement.title,
+            category: problemStatement.category,
+            description: problemStatement.description,
+            tags: problemStatement.tags || []
+          }
+        });
+        psId = newPs.id;
+      } else {
+        return res.status(400).json({ 
+          error: 'Problem statement must have either id OR (title, category, description)' 
+        });
       }
+    } else {
+      return res.status(400).json({ error: 'Problem statement is required' });
     }
 
     // Generate SCC credentials
@@ -65,62 +97,74 @@ export async function registerTeam(req: Request, res: Response) {
 
     // Create team and members in a transaction
     const created = await prisma.$transaction(async (tx) => {
-      const teamData: any = {
-        scc_id,
-        scc_password,
-        title: lead.team_title ?? `Team ${lead.name}`,
-        gallery_images: gallery_images || [],
-      };
-      if (typeof psId === 'number') teamData.ps_id = psId;
+      // Create the team
+      const newTeam = await tx.team.create({
+        data: {
+          scc_id,
+          scc_password,
+          title: team.title,
+          ps_id: psId,
+          gallery_images: team.gallery_images || [],
+        },
+      });
 
-      const team = await tx.team.create({ data: teamData });
-
-      // Create lead as a member assigned to team
+      // Create lead as a member
       const leadMember = await tx.member.create({
         data: {
           name: lead.name,
           email: lead.email,
           phone_number: lead.phone_number,
-          profile_image: lead.profile_image ?? null,
-          department: lead.department ?? null,
+          profile_image: lead.profile_image || null,
+          department: lead.department || null,
           college_name: lead.college_name,
-          year_of_study: lead.year_of_study ?? null,
-          location: lead.location ?? null,
-          attendance: lead.attendance ?? 0,
-          teamId: team.id,
+          year_of_study: lead.year_of_study || null,
+          location: lead.location || null,
+          teamId: newTeam.id,
         },
       });
 
       // Create other members
-      for (const m of members) {
-        await tx.member.create({ data: {
-          name: m.name,
-          email: m.email,
-          phone_number: m.phone_number,
-          profile_image: m.profile_image ?? null,
-          department: m.department ?? null,
-          college_name: m.college_name ?? lead.college_name,
-          year_of_study: m.year_of_study ?? null,
-          location: m.location ?? null,
-          attendance: m.attendance ?? 0,
-          teamId: team.id,
-        }});
-      }
+      const otherMembers = await Promise.all(
+        members.map((member: any) =>
+          tx.member.create({
+            data: {
+              name: member.name,
+              email: member.email,
+              phone_number: member.phone_number,
+              profile_image: member.profile_image || null,
+              department: member.department || null,
+              college_name: member.college_name,
+              year_of_study: member.year_of_study || null,
+              location: member.location || null,
+              teamId: newTeam.id,
+            },
+          })
+        )
+      );
 
-      return team;
+      return { ...newTeam, members: [leadMember, ...otherMembers] };
     });
 
-    // Return full team with members
-    const teamWithMembers = await prisma.team.findUnique({
+    // Return full team with members, problem statement, and tasks
+    const teamWithDetails = await prisma.team.findUnique({
       where: { id: created.id },
-      include: { team_members: true, tasks: true, problem_statement: true },
+      include: { 
+        team_members: true, 
+        tasks: true, 
+        problem_statement: true 
+      },
     });
 
-    return res.status(201).json(teamWithMembers);
+    return res.status(201).json({
+      success: true,
+      message: 'Team registered successfully',
+      team: teamWithDetails
+    });
+
   } catch (err: any) {
     console.error('Registration error', err);
     if (err?.code === 'P2002') {
-      return res.status(409).json({ error: 'Unique constraint failed', meta: err.meta });
+      return res.status(409).json({ error: 'Database constraint violation - duplicate data' });
     }
     return res.status(500).json({ error: 'Internal server error' });
   }

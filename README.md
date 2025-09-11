@@ -16,11 +16,18 @@
 #### 2. Registration Utilities
 - **File**: `src/utils/registration.ts`
 - **Functions**:
-  - `generateUniqueSccId()`: Creates unique team IDs like `SCC-A1B2C3`
+  - `generateUniqueSccId()`: Creates sequential team IDs like `SCC001`, `SCC002`
   - `generatePassword()`: Generates secure base64url passwords
-- **Security**: Ensures SCC ID uniqueness via database checks
+- **Security**: Ensures SCC ID uniqueness via database checks with sequential numbering
 
-#### 3. Test Endpoint
+#### 3. Image Upload & Cloudinary Integration
+- **Middleware**: `imageUploadMiddleware` for handling file uploads
+- **Validation**: Only allows JPEG, PNG, WEBP images (max 5MB)
+- **Storage**: Uploads to Cloudinary with automatic optimization (400x400px)
+- **URL Injection**: Stores Cloudinary URLs in profile_image fields
+- **Flexible**: Supports both JSON-only and multipart/form-data requests
+
+#### 4. Test Endpoint
 - **Endpoint**: `GET /api/registerTeam/test`
 - **Purpose**: Verify route mounting and basic functionality
 - **Response**: Returns "Register route working"
@@ -31,24 +38,64 @@
 ```typescript
 // Register team with lead, members, and problem statement
 export async function registerTeam(req: Request, res: Response) {
-  // Validate required fields
-  // Check email uniqueness
-  // Create/link problem statement
-  // Generate SCC credentials
-  // Create team and members in transaction
-  // Return full team object
+  // Extract data from request body
+  // Validate team title and required fields
+  // Check email uniqueness across database and payload
+  // Handle problem statement (existing ID or create new)
+  // Generate sequential SCC credentials
+  // Create team and all members in transaction
+  // Return full team with Cloudinary URLs and relations
+}
+```
+
+#### New Request Structure
+```json
+{
+  "data": {
+    "team": { 
+      "title": "Team Alpha",
+      "gallery_images": ["url1", "url2"] 
+    },
+    "lead": { 
+      "name": "John Doe",
+      "email": "john@example.com",
+      "phone_number": "+1234567890",
+      "college_name": "ABC University",
+      "department": "Computer Science",
+      "year_of_study": 3,
+      "location": "City"
+    },
+    "members": [
+      {
+        "name": "Jane Smith",
+        "email": "jane@example.com", 
+        "phone_number": "+0987654321",
+        "college_name": "ABC University"
+      }
+    ],
+    "problemStatement": { "id": 1 }
+  }
 }
 ```
 
 #### Request Validation
-- **Required Fields**: name, email, phone_number, college_name for lead
+- **Required Fields**: name, email, phone_number, college_name for lead; title for team
 - **Email Checks**: Duplicate prevention within payload and database
 - **Problem Statement**: Create new or link existing by ID
+- **Image Validation**: JPEG/PNG/WEBP only, max 5MB per file
 
 #### Database Operations
+- **Sequential SCC IDs**: Finds highest existing SCC ID and increments (SCC001, SCC002, etc.)
 - **Prisma Transactions**: Ensures atomicity of team and member creation
-- **Relations**: Properly links team, members, and problem statements
+- **Relations**: Properly links team, members, and problem statements via foreign keys
 - **Error Handling**: Handles unique constraint violations and validation errors
+
+#### Image Processing Flow
+1. **Upload**: Multer receives multipart/form-data with image files
+2. **Validation**: Checks file types (JPEG/PNG/WEBP) and sizes (max 5MB)
+3. **Cloudinary**: Uploads to cloud storage with automatic optimization
+4. **URL Injection**: Stores returned Cloudinary URLs in request body
+5. **Database**: Saves Cloudinary URLs in profile_image fields
 
 ### Usage Instructions
 
@@ -57,21 +104,47 @@ export async function registerTeam(req: Request, res: Response) {
 # Test route verification
 GET http://localhost:3001/api/registerTeam/test
 
-# Register new team
+# Register new team (JSON only - no images)
 POST http://localhost:3001/api/registerTeam
 Content-Type: application/json
 
 {
-  "lead": {
-    "name": "Team Leader",
-    "email": "leader@example.com",
-    "phone_number": "9876543210",
-    "college_name": "College Name",
-    "team_title": "Team Name"
-  },
-  "members": [...],
-  "problemStatement": {...}
+  "data": {
+    "team": { "title": "Team Alpha" },
+    "lead": {
+      "name": "Team Leader",
+      "email": "leader@example.com",
+      "phone_number": "9876543210",
+      "college_name": "College Name"
+    },
+    "members": [
+      {
+        "name": "Member 1",
+        "email": "member1@example.com",
+        "phone_number": "1234567890",
+        "college_name": "College Name"
+      }
+    ],
+    "problemStatement": { "id": 1 }
+  }
 }
+
+# Register new team (with images)
+POST http://localhost:3001/api/registerTeam
+Content-Type: multipart/form-data
+
+Form data:
+- data: '{"data": {"team": {"title": "Team Alpha"}, "lead": {...}, "members": [...], "problemStatement": {"id": 1}}}'
+- leadImage: [file upload for lead profile image]
+- memberImages: [file uploads for member profile images in order]
+```
+
+#### Environment Variables Required
+```bash
+# Add to .env file
+CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key  
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 ```
 
 ### Task 1: Implement Leaderboard API with Caching
