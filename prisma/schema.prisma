@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output = "../lib/generated/prisma"
 }
 
 datasource db {
@@ -17,12 +16,15 @@ model Member {
   department    String?
   college_name  String
   year_of_study Int?
-  location      String?
+  location      String
   attendance    Int     @default(0)
 
-  // Relation
+  // Relations
   teamId Int?
-  team   Team? @relation(fields: [teamId], references: [id])
+  team   Team? @relation("TeamMembersRelation", fields: [teamId], references: [id])
+
+  // One member can lead multiple teams
+  leadsTeams Team[] @relation("TeamLeaderRelation")
 }
 
 model Team {
@@ -30,13 +32,19 @@ model Team {
   scc_id              String?
   scc_password        String?
   title               String
+  ps_id               Int
   problem_statement   ProblemStatement @relation(fields: [ps_id], references: [id])
-  ps_id Int
-  gallery_images      String[] // Store multiple image URLs
+  gallery_images      String[]          // PostgreSQL array
 
-  // Relations
-  team_members Member[]
-  tasks        Task[]
+  // Leader relation (one member can lead multiple teams)
+  leaderId Int?
+  leader   Member? @relation("TeamLeaderRelation", fields: [leaderId], references: [id])
+
+  // Team members
+  team_members Member[] @relation("TeamMembersRelation")
+
+  // Tasks
+  tasks Task[]
 }
 
 model ProblemStatement {
@@ -45,7 +53,7 @@ model ProblemStatement {
   title       String
   description String
   category    String
-  tags        String[]
+  tags        String[]   // PostgreSQL array
 
   Team Team[]
 }
@@ -54,7 +62,7 @@ model Task {
   id          Int      @id @default(autoincrement())
   title       String
   description String?
-  difficulty  String? // could be "easy", "medium", "hard"
+  difficulty  String? // "easy", "medium", "hard"
   round_num   Int
   points      Int      @default(0)
   completed   Boolean  @default(false)

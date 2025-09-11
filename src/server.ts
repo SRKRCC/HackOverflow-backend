@@ -1,27 +1,22 @@
 import express from "express";
-import memberRoutes from "./routes/memberRoutes.js";
+import memberRoutes from "../src/routes/memberRoutes.js";
 import teamRoutes from "./routes/teamRoutes.js";
-import leaderboardRoutes from './routes/leaderboardRoutes.js';
-import { fetchLeaderboard } from './controllers/leaderboardController.js';
+import leaderboardRoutes from "./routes/leaderboardRoutes.js";
 import taskRoutes from "./routes/taskRoutes.js";
+import searchRoutes from "./routes/searchRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-app.use("/api/members", memberRoutes);
-app.use("/api/teams", teamRoutes);
-app.use("/api/leaderboards", leaderboardRoutes);
-app.use("/api/tasks", taskRoutes);
-
-
-// Initialize leaderboard cache
-fetchLeaderboard();
-
-// Refresh leaderboard cache every 5 minutes
-setInterval(fetchLeaderboard, 5 * 60 * 1000);
+// Register routes
+app.use("/members", memberRoutes);
+app.use("/teams", teamRoutes);
+app.use("/leaderboard", leaderboardRoutes);
+app.use("/tasks", taskRoutes);
+app.use("/search", searchRoutes);
 
 app.listen(PORT, () => {
-  console.log(`Server is listening on ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
