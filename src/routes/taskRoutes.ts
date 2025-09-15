@@ -6,11 +6,11 @@ import {
   updateTask,
   deleteTask,
 } from "../controllers/taskControllers.js";
-import { authenticate,authorizeRole} from "../middlewares/authMiddleware.ts.js";
+import { authenticateAdmin } from "../middlewares/authenticateAdmin.js";
 
 const router = Router();
 
-router.use(authenticate,authorizeRole("admin")); //if give access permission to team by authorizeRole("team")
+router.use(authenticateAdmin);
 
 // CRUD Endpoints
 router.post("/", createTask); // Create
