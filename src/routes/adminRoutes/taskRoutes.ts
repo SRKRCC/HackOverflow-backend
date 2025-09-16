@@ -5,8 +5,8 @@ import {
   getTaskById,
   updateTask,
   deleteTask,
-} from "../controllers/taskControllers.js";
-import { authenticateAdmin } from "../middlewares/authenticateAdmin.js";
+} from "../../controllers/adminControllers/taskControllers.js";
+import { authenticateAdmin } from "../../middlewares/authenticateAdmin.js";
 
 const router = Router();
 

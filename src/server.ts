@@ -2,10 +2,10 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import memberRoutes from "./routes/memberRoutes.js";
-import teamRoutes from "./routes/teamRoutes.js";
-import leaderboardRoutes from './routes/leaderboardRoutes.js';
-import { fetchLeaderboard } from './controllers/leaderboardController.js';
-import taskRoutes from "./routes/taskRoutes.js";
+import teamRoutes from "./routes/teamRoutes/teamRoutes.js";
+import leaderboardRoutes from './routes/adminRoutes/leaderboardRoutes.js';
+import { fetchLeaderboard } from './controllers/adminControllers/leaderboardController.js';
+import taskRoutes from "./routes/adminRoutes/taskRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 
 const app = express();
