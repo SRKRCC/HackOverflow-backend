@@ -50,6 +50,12 @@ model ProblemStatement {
   Team Team[]
 }
 
+enum TaskStatus {
+  Pending
+  InReview
+  Completed
+}
+
 model Task {
   id          Int      @id @default(autoincrement())
   title       String
@@ -57,9 +63,12 @@ model Task {
   difficulty  String? // could be "easy", "medium", "hard"
   round_num   Int
   points      Int      @default(0)
+  status      TaskStatus @default(Pending)
   completed   Boolean  @default(false)
   in_review   Boolean  @default(false)
   timestamp   DateTime @default(now())
+  teamNotes   String?
+  reviewNotes String?
 
   // Relation
   teamId Int
