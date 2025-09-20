@@ -41,7 +41,7 @@ model Team {
 
 model ProblemStatement {
   id          Int    @id @default(autoincrement())
-  psId        String
+  psId        String @unique
   title       String
   description String
   category    String
