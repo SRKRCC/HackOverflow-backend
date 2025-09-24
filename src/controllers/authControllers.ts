@@ -13,21 +13,21 @@ if (!JWT_SECRET) {
 }
 
 const login = async (req: Request, res: Response) => {
-  const { username, password } = req.body; 
+  const { username, password } = req.body;
 
   try {
     let user: any = null;
     let role: "team" | "admin" | null = null;
 
-    // 1. Try Team login
-    user = await prisma.team.findFirst({ where: { scc_id: username } });
-    if (user && user.scc_password === password) {
-      role = "team";
+    // 1. Try Admin login
+    user = await prisma.admin.findUnique({ where: { email: username } });
+    if (user && user.password === password) {
+      role = "admin";
     } else {
-      // 2. Try Admin login
-      user = await prisma.admin.findUnique({ where: { email: username } });
-      if (user && user.password === password) {
-        role = "admin";
+      // 2. Try Team login
+      user = await prisma.team.findFirst({ where: { scc_id: username } });
+      if (user && user.scc_password === password) {
+        role = "team";
       }
     }
 
@@ -44,7 +44,9 @@ const login = async (req: Request, res: Response) => {
 
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "12h" });
 
-    res.cookie("token", token, {
+    const cookieName = role === "admin" ? "admin_token" : "team_token";
+
+    res.cookie(cookieName, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
