@@ -3,12 +3,12 @@ console.log('Starting server setup...');
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-// import memberRoutes from "./routes/memberRoutes.js";
 import teamRoutes from "./routes/teamRoutes/teamRoutes.js";
 import leaderboardRoutes from './routes/adminRoutes/leaderboardRoutes.js';
 import { fetchLeaderboard } from './controllers/adminControllers/leaderboardController.js';
 import taskRoutes from "./routes/adminRoutes/taskRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import psRoutes from "./routes/adminRoutes/psRoutes.js"
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,6 +19,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // app.use("/api/members", memberRoutes);
@@ -28,11 +29,7 @@ app.use("/api/tasks", taskRoutes);
 // app.use('/api/registerTeam', registerRoutes);
 // console.log('Register routes mounted at /api/registerTeam');
 app.use("/api/auth", authRoutes);
-// Add a simple test route
-app.get('/test-server', (req, res) => {
-  console.log('Server test route hit');
-  res.send('Server is working');
-});
+app.use("/api/problem-statements", psRoutes);
 
 // Initialize leaderboard cache
 fetchLeaderboard();

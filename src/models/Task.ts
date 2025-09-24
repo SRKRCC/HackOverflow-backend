@@ -1,3 +1,9 @@
+export enum TaskStatus {
+    Pending = "pending",
+    InReview = "in_review",
+    Completed = "completed",
+}
+
 export interface Task {
     id: number;
     title: string;
@@ -5,8 +11,10 @@ export interface Task {
     difficulty?: "easy" | "medium" | "hard" | null;
     round_num: number;
     points: number;
+    status: TaskStatus;
     completed: boolean;
-    in_review: boolean;
+    teamNotes?: string;
+    reviewNotes?: string;
     timestamp: Date;
 
     // Relation
