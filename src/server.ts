@@ -3,7 +3,7 @@ console.log('Starting server setup...');
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import memberRoutes from "./routes/memberRoutes.js";
+// import memberRoutes from "./routes/memberRoutes.js";
 import teamRoutes from "./routes/teamRoutes/teamRoutes.js";
 import leaderboardRoutes from './routes/adminRoutes/leaderboardRoutes.js';
 import { fetchLeaderboard } from './controllers/adminControllers/leaderboardController.js';
@@ -25,8 +25,8 @@ app.use(cookieParser());
 app.use("/api/teams", teamRoutes);
 app.use("/api/leaderboards", leaderboardRoutes);
 app.use("/api/tasks", taskRoutes);
-app.use('/api/registerTeam', registerRoutes);
-console.log('Register routes mounted at /api/registerTeam');
+// app.use('/api/registerTeam', registerRoutes);
+// console.log('Register routes mounted at /api/registerTeam');
 app.use("/api/auth", authRoutes);
 // Add a simple test route
 app.get('/test-server', (req, res) => {
