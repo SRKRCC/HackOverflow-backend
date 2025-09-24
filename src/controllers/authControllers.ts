@@ -53,7 +53,11 @@ const login = async (req: Request, res: Response) => {
       maxAge: 12 * 60 * 60 * 1000, // 12h
     });
 
-    res.json({ message: `${role} login successful`, role });
+    res.json({ 
+      message: `${role} login successful`, 
+      role,
+      token // Include token in response for easier testing
+    });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ error: "Internal server error" });

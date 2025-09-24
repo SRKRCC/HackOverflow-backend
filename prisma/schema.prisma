@@ -69,7 +69,7 @@ model Task {
   timestamp   DateTime @default(now())
   teamNotes   String?
   reviewNotes String?
-
+  
   // Relation
   teamId Int
   team   Team @relation(fields: [teamId], references: [id])
