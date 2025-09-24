@@ -1,35 +1,33 @@
 console.log('Starting server setup...');
 
 import express from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
 import memberRoutes from "./routes/memberRoutes.js";
-import teamRoutes from "./routes/teamRoutes.js";
-import leaderboardRoutes from './routes/leaderboardRoutes.js';
-import registerRoutes from './routes/registerRoutes.js';
-import { fetchLeaderboard } from './controllers/leaderboardController.js';
-import taskRoutes from "./routes/taskRoutes.js";
+import teamRoutes from "./routes/teamRoutes/teamRoutes.js";
+import leaderboardRoutes from './routes/adminRoutes/leaderboardRoutes.js';
+import { fetchLeaderboard } from './controllers/adminControllers/leaderboardController.js';
+import taskRoutes from "./routes/adminRoutes/taskRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
-console.log(`Attempting to start server on port ${PORT}`);
+app.use(cors({
+  origin: "http://localhost:5173", // Replace this with your actual frontend URL
+  credentials: true,                          
+}));
 
 app.use(express.json());
+app.use(cookieParser());
 
-// Add global request logging
-app.use((req, res, next) => {
-  console.log(`INCOMING REQUEST: ${req.method} ${req.url} - ${new Date().toISOString()}`);
-  next();
-});
-
-console.log('Global logging middleware added');
-
-app.use("/api/members", memberRoutes);
+// app.use("/api/members", memberRoutes);
 app.use("/api/teams", teamRoutes);
 app.use("/api/leaderboards", leaderboardRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use('/api/registerTeam', registerRoutes);
 console.log('Register routes mounted at /api/registerTeam');
-
+app.use("/api/auth", authRoutes);
 // Add a simple test route
 app.get('/test-server', (req, res) => {
   console.log('Server test route hit');

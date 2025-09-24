@@ -5,9 +5,12 @@ import {
   getTaskById,
   updateTask,
   deleteTask,
-} from "../controllers/taskControllers.js";
+} from "../../controllers/adminControllers/taskControllers.js";
+import { authenticateAdmin } from "../../middlewares/authenticateAdmin.js";
 
 const router = Router();
+
+router.use(authenticateAdmin);
 
 // CRUD Endpoints
 router.post("/", createTask); // Create
