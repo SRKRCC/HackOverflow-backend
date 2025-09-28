@@ -1,5 +1,7 @@
 import { PrismaClient } from "../../../lib/generated/prisma/index.js";
 import type { Request, Response } from "express";
+import fs from "fs";
+import csv from "csv-parser";
 
 const prisma = new PrismaClient();
 
@@ -12,35 +14,82 @@ const statementSelect = {
   tags: true,
 };
 
-// Create Statement
-export const createStatement = async (req: Request, res: Response) => {
+const createProblemStatement = async (row: any) => {
+  const lastStatement = await prisma.problemStatement.findFirst({
+    orderBy: { id: "desc" },
+  });
+
+  let nextNumber = 1;
+  if (lastStatement?.psId) {
+    const lastNumber = parseInt(lastStatement.psId.replace("HO2K25", ""), 10);
+    nextNumber = lastNumber + 1;
+  }
+
+  const psId = `HO2K25${String(nextNumber).padStart(3, "0")}`;
+
+  return prisma.problemStatement.create({
+    data: {
+      psId,
+      title: row.title,
+      description: row.description,
+      category: row.category,
+      tags:
+        typeof row.tags === "string"
+          ? row.tags.split(",").map((tag: string) => tag.trim())
+          : row.tags,
+    },
+  });
+};
+
+export const uploadCsv = async (req: Request, res: Response) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No file uploaded" });
+  }
+
+  const uploadedFile = req.file;
+  const results: any[] = [];
+
   try {
-    const { title, description, category, tags } = req.body;
+    const stream = fs.createReadStream(uploadedFile.path)
+      .pipe(csv());
 
-    if (!title || !description || !category || !tags) {
-      return res.status(400).json({ error: "All fields (title, description, category, tags) are required." });
-    }
+    stream.on("data", (data) => results.push(data));
 
-    const lastStatement = await prisma.problemStatement.findFirst({
-      orderBy: { id: "desc" },
+    stream.on("end", async () => {
+      try {
+        let insertedCount = 0;
+
+        for (const row of results) {
+          if (!row.title || !row.description || !row.category || !row.tags) {
+            console.warn("Skipping invalid row:", row);
+            continue;
+          }
+          await createProblemStatement(row);
+          insertedCount++;
+        }
+
+        // Delete file after processing
+        fs.unlink(uploadedFile.path, (err) => {
+          if (err) console.error("Error deleting file:", err);
+        });
+
+        res
+          .status(201)
+          .json({ message: `${insertedCount} problem statements created successfully` });
+      } catch (err) {
+        console.error("Error inserting problem statements:", err);
+        res.status(500).json({ error: "Failed to create problem statements" });
+      }
     });
 
-    let nextNumber = 1;
-    if (lastStatement?.psId) {
-      const lastNumber = parseInt(lastStatement.psId.replace("HO2K25", ""), 10);
-      nextNumber = lastNumber + 1;
-    }
-
-    const psId = `HO2K25${String(nextNumber).padStart(3, "0")}`;
-
-    const statement = await prisma.problemStatement.create({
-      data: { psId, title, description, category, tags },
-      select: statementSelect,
+    stream.on("error", (err) => {
+      console.error("CSV parsing error:", err);
+      res.status(400).json({ error: "Invalid CSV format" });
     });
 
-    res.status(201).json({ message: "Problem Statement created successfully", data: statement });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    console.error("Error processing CSV upload:", err);
+    res.status(500).json({ error: "Something went wrong while processing the file" });
   }
 };
 

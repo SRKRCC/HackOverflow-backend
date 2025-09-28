@@ -1,23 +1,39 @@
 import { Router } from "express";
+import multer from "multer";
 import {
-    createStatement,
-    deleteStatement,
-    getStatementById,
-    getStatements,
-    updateStatement,
-} from '../../controllers/adminControllers/psControllers.js'
+  uploadCsv,
+  deleteStatement,
+  getStatementById,
+  getStatements,
+  updateStatement,
+} from "../../controllers/adminControllers/psControllers.js";
 import { authenticateAdmin } from "../../middlewares/authenticateAdmin.js";
 import { authenticateTeam } from "../../middlewares/authenticateTeam.js";
 
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, "uploads/"),
+  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
+});
+
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    if (!file.originalname.endsWith(".csv")) {
+      return cb(new Error("Only CSV files are allowed"));
+    }
+    cb(null, true);
+  },
+});
+
 const router = Router();
 
-//Routes for admin only
-router.post("/",authenticateAdmin,createStatement);//create a statement
-router.put("/:id",authenticateAdmin,updateStatement);//update the statement by id
-router.delete("/:id",authenticateAdmin,deleteStatement);//delete the statement by id
+// Admin routes
+router.post("/csv",authenticateAdmin,upload.single("csv-file"),uploadCsv);
+router.put("/:id", authenticateAdmin, updateStatement);
+router.delete("/:id", authenticateAdmin, deleteStatement);
 
-//Routes for Teams
-router.get("/:id",authenticateTeam,getStatementById);//get the atement by id
-router.get("/",authenticateTeam,getStatements);//show all statements
+// Team routes
+router.get("/:id", authenticateTeam, getStatementById);
+router.get("/", authenticateTeam, getStatements);
 
 export default router;
