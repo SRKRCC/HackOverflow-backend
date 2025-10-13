@@ -7,12 +7,13 @@ import { fetchLeaderboard } from './controllers/adminControllers/leaderboardCont
 import taskRoutes from "./routes/adminRoutes/taskRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import psRoutes from "./routes/adminRoutes/psRoutes.js"
+import adminTeamRoutes from "./routes/adminRoutes/adminTeamRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors({
-  origin: "http://localhost:5173", // Replace this with your actual frontend URL
+  origin: "http://localhost:5173",
   credentials: true,                          
 }));
 
@@ -22,6 +23,7 @@ app.use(cookieParser());
 
 // app.use("/api/members", memberRoutes);
 app.use("/api/teams", teamRoutes);
+app.use("/api/admin/teams", adminTeamRoutes);
 app.use("/api/leaderboards", leaderboardRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/auth", authRoutes);

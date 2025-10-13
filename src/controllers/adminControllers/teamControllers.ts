@@ -31,3 +31,24 @@ export const getDetails = async (req: Request, res: Response) => {
         res.status(500).json({ error: "Internal server error" });
     }
 };
+
+export const getAllTeams = async (req: Request, res: Response) => {
+    try {
+        const teams = await prisma.team.findMany({
+            include: {
+                team_members: true,
+            },
+        });
+
+        const formattedTeams = teams.map(team => ({
+            teamId: team.id,
+            title: team.title,
+            members: team.team_members,
+        }));
+
+        res.json(formattedTeams);
+    } catch (error) {
+        console.error("Error fetching teams:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};

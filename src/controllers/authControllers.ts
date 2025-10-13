@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import { PrismaClient } from "../../lib/generated/prisma/index.js";
 import type { Request, Response } from "express";
-import { verifyPasswordHash, generateToken } from "../utils/jwtService.js";
+import { verifyPasswordHash, generateToken, generatePasswordHash } from "../utils/jwtService.js";
 
 dotenv.config();
 
@@ -16,16 +16,16 @@ export const login = async (req: Request, res: Response) => {
 
   try {
     let user: any = null;
-    let role: "team" | "admin" | null = null;
+    let userRole: "team" | "admin" | null = null;
 
     if (role === "admin") {
       user = await prisma.admin.findUnique({ where: { email: username } });
       if (user) {
         try {
-          // Verify the hashed password
-          const decryptedPassword = verifyPasswordHash(user.password);
-          if (decryptedPassword === password) {
-            role = "admin";
+          // Verify the hashed password using bcrypt
+          const isPasswordValid = await verifyPasswordHash(password, user.password);
+          if (isPasswordValid) {
+            userRole = "admin";
           }
         } catch (error) {
           return res.status(500).json({ error: "Internal server error, Please try again" });
@@ -35,9 +35,10 @@ export const login = async (req: Request, res: Response) => {
       user = await prisma.team.findFirst({ where: { scc_id: username } });
       if (user && user.scc_password) {
         try {
-          const decryptedPassword = verifyPasswordHash(user.scc_password);
-          if (decryptedPassword === password) {
-            role = "team";
+          // Verify the hashed password using bcrypt
+          const isPasswordValid = await verifyPasswordHash(password, user.scc_password);
+          if (isPasswordValid) {
+            userRole = "team";
           }
         } catch (error) {
           return res.status(500).json({ error: "Internal server error, Please try again" });
@@ -45,12 +46,12 @@ export const login = async (req: Request, res: Response) => {
       }
     }
 
-    if (!user || !role) {
+    if (!user || !userRole) {
       return res.status(400).json({ error: "No existing User, Please enter valid credentials" });
     }
 
     const payload =
-      role === "team"
+      userRole === "team"
         ? { teamId: user.id, role: "team" }
         : { adminId: user.id, role: "admin" };
 
@@ -66,8 +67,8 @@ export const login = async (req: Request, res: Response) => {
     });
 
     res.json({
-      message: `${role} login successful`,
-      role,
+      message: `${userRole} login successful`,
+      role: userRole,
       userID: user.id,
       token
     });

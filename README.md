@@ -429,6 +429,187 @@ Upload problem statements via CSV file.
 
 ---
 
+## 🗃️ Data Models & Schemas
+
+### Team Model
+```typescript
+interface Team {
+  id: number;
+  scc_id?: string;           // Team's SCC identifier
+  scc_password?: string;     // Hashed password for authentication
+  title: string;             // Team name
+  ps_id: number;             // Foreign key to ProblemStatement
+  gallery_images: string[];  // Array of image URLs
+  
+  // Relations
+  problem_statement: ProblemStatement;
+  team_members: Member[];
+  tasks: Task[];
+}
+```
+
+### Member Model
+```typescript
+interface Member {
+  id: number;
+  name: string;
+  email: string;             // Unique email address
+  phone_number: string;
+  profile_image?: string;    // Optional profile picture URL
+  department?: string;       // Academic department (CSE, IT, ECE, etc.)
+  college_name: string;
+  year_of_study?: number;    // Academic year (1-4)
+  location?: string;         // City/location
+  attendance: number;        // Default: 0
+  
+  // Relations
+  teamId?: number;           // Foreign key to Team (optional)
+  team?: Team;
+}
+```
+
+### ProblemStatement Model
+```typescript
+interface ProblemStatement {
+  id: number;
+  psId: string;              // Unique problem statement identifier (HO2K25001)
+  title: string;
+  description: string;
+  category: string;          // Agriculture, Environment, Energy, etc.
+  tags: string[];            // Array of relevant tags
+  
+  // Relations
+  teams: Team[];             // Teams working on this problem
+}
+```
+
+### Task Model
+```typescript
+interface Task {
+  id: number;
+  title: string;
+  description?: string;
+  difficulty?: string;       // "easy" | "medium" | "hard"
+  round_num: number;         // Competition round number
+  points: number;            // Points awarded for completion (default: 0)
+  status: TaskStatus;        // "Pending" | "InReview" | "Completed"
+  completed: boolean;        // Default: false
+  in_review: boolean;        // Default: false
+  timestamp: Date;           // Creation timestamp
+  teamNotes?: string;        // Team's submission notes
+  reviewNotes?: string;      // Admin's review feedback
+  
+  // Relations
+  teamId: number;            // Foreign key to Team
+  team: Team;
+}
+
+enum TaskStatus {
+  Pending = "Pending",
+  InReview = "InReview",
+  Completed = "Completed"
+}
+```
+
+### Admin Model
+```typescript
+interface Admin {
+  id: number;
+  email: string;             // Unique admin email
+  password: string;          // Hashed password
+}
+```
+
+---
+
+## 🔄 Model Relationships
+
+```
+┌─────────────────┐    1:N    ┌─────────────────┐
+│ ProblemStatement│◄─────────►│      Team       │
+└─────────────────┘           └─────────────────┘
+                                       ▲
+                                       │ 1:N
+                                       ▼
+                               ┌─────────────────┐
+                               │     Member      │
+                               └─────────────────┘
+                                       ▲
+                                       │ 1:N
+                                       ▼
+┌─────────────────┐           ┌─────────────────┐
+│      Admin      │           │      Task       │
+└─────────────────┘           └─────────────────┘
+```
+
+### Relationship Details:
+- **Team ↔ ProblemStatement**: Many-to-One (Many teams can work on one problem statement)
+- **Team ↔ Member**: One-to-Many (One team has multiple members)
+- **Team ↔ Task**: One-to-Many (One team has multiple tasks)
+- **Admin**: Standalone model for authentication
+
+---
+
+## 📊 Sample Data Structure
+
+### Complete Team with Relations:
+```json
+{
+  "id": 1,
+  "scc_id": "SCC001",
+  "title": "Green Farmers",
+  "ps_id": 1,
+  "gallery_images": ["https://example.com/img1.png"],
+  "problem_statement": {
+    "id": 1,
+    "psId": "HO2K25001",
+    "title": "AI-powered Crop Monitoring",
+    "description": "Build an AI system to detect crop diseases from images.",
+    "category": "Agriculture",
+    "tags": ["AI", "Machine Learning", "Agriculture"]
+  },
+  "team_members": [
+    {
+      "id": 1,
+      "name": "Alice Johnson",
+      "email": "alice@example.com",
+      "phone_number": "9876543210",
+      "department": "CSE",
+      "college_name": "ABC University",
+      "year_of_study": 3,
+      "location": "Hyderabad",
+      "attendance": 10
+    }
+  ],
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Complete Frontend Design",
+      "description": "Design the main dashboard",
+      "difficulty": "medium",
+      "round_num": 1,
+      "points": 50,
+      "status": "Pending",
+      "completed": false,
+      "in_review": false,
+      "timestamp": "2025-10-14T10:30:00.000Z",
+      "teamNotes": null,
+      "reviewNotes": null
+    }
+  ]
+}
+```
+
+### Task Status Flow:
+```
+Pending → InReview → Completed
+   ↑         ↑          ↑
+Created   Submitted   Reviewed
+by Admin   by Team    by Admin
+```
+
+---
+
 ## 🔑 Authentication Headers
 
 For requests requiring authentication, include the JWT token:
