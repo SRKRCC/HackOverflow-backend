@@ -81,31 +81,377 @@ npm start
 - `npm run db:migrate` - Run database migrations
 - `npm run db:seed` - Seed database with sample data
 
-## API Endpoints
+## 🚀 API Documentation
 
-### Members
-- `GET /api/members` - Get all members
-- `POST /api/members` - Create a new member
-- `GET /api/members/:id` - Get member by ID
-- `PUT /api/members/:id` - Update member
-- `DELETE /api/members/:id` - Delete member
+### Base URL
+```
+http://localhost:3000/api
+```
 
-### Teams
-- `GET /api/teams` - Get all teams
-- `POST /api/teams` - Create a new team
-- `GET /api/teams/:id` - Get team by ID
-- `PUT /api/teams/:id` - Update team
-- `DELETE /api/teams/:id` - Delete team
+### Authentication
+Most endpoints require authentication via JWT tokens set as cookies (`admin_token` or `team_token`).
 
-### Leaderboard
-- `GET /api/leaderboards` - Get leaderboard with caching
+---
 
-### Tasks
-- `GET /api/tasks` - Get all tasks
-- `POST /api/tasks` - Create a new task
-- `GET /api/tasks/:id` - Get task by ID
-- `PUT /api/tasks/:id` - Update task
-- `DELETE /api/tasks/:id` - Delete task
+## 🔐 Authentication Routes (`/auth`)
+
+### Login
+**POST** `/api/auth/login`
+
+Authenticate users (admin or team) and receive JWT token.
+
+**Request Body:**
+```json
+{
+  "role": "admin" | "team",
+  "username": "string",
+  "password": "string"
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "message": "admin login successful",
+  "role": "admin" | "team",
+  "userID": 1,
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Error Responses:**
+- `400` - Missing required fields or invalid credentials
+- `500` - Internal server error
+
+---
+
+## 📊 Leaderboard Routes (`/leaderboards`)
+
+### Get Leaderboard
+**GET** `/api/leaderboards`
+
+Retrieve cached leaderboard data with team rankings.
+
+**Success Response (200):**
+```json
+[
+  {
+    "teamId": 1,
+    "teamName": "Green Farmers",
+    "totalPoints": 150,
+    "completedTasks": 3,
+    "rank": 1
+  }
+]
+```
+
+---
+
+## 📝 Task Routes (`/tasks`) - Admin Only
+
+> 🔒 All task routes require admin authentication
+
+### Create Task
+**POST** `/api/tasks`
+
+Create a new task and assign to a team.
+
+**Request Body:**
+```json
+{
+  "title": "Complete Frontend Design",
+  "description": "Design the main dashboard",
+  "difficulty": "medium",
+  "round_num": 1,
+  "points": 50,
+  "teamId": 1
+}
+```
+
+**Success Response (201):**
+```json
+{
+  "id": 1,
+  "title": "Complete Frontend Design",
+  "description": "Design the main dashboard",
+  "difficulty": "medium",
+  "round_num": 1,
+  "points": 50,
+  "status": "Pending",
+  "completed": false,
+  "in_review": false,
+  "timestamp": "2025-10-13T10:30:00.000Z",
+  "teamId": 1
+}
+```
+
+### Get All Tasks
+**GET** `/api/tasks`
+
+Retrieve all tasks across teams.
+
+**Success Response (200):**
+```json
+[
+  {
+    "id": 1,
+    "title": "Complete Frontend Design",
+    "status": "Pending",
+    "team": {
+      "id": 1,
+      "title": "Green Farmers"
+    }
+  }
+]
+```
+
+### Get Task by ID
+**GET** `/api/tasks/:id`
+
+**Success Response (200):**
+```json
+{
+  "id": 1,
+  "title": "Complete Frontend Design",
+  "description": "Design the main dashboard",
+  "difficulty": "medium",
+  "round_num": 1,
+  "points": 50,
+  "status": "Pending",
+  "completed": false,
+  "in_review": false,
+  "timestamp": "2025-10-13T10:30:00.000Z",
+  "teamId": 1,
+  "team": {
+    "id": 1,
+    "title": "Green Farmers"
+  }
+}
+```
+
+### Update Task
+**PUT** `/api/tasks/:id`
+
+**Request Body:**
+```json
+{
+  "title": "Updated Task Title",
+  "description": "Updated description",
+  "points": 75
+}
+```
+
+### Delete Task
+**DELETE** `/api/tasks/:id`
+
+**Success Response (200):**
+```json
+{
+  "message": "Task deleted successfully"
+}
+```
+
+### Complete Task (Admin Review)
+**POST** `/api/tasks/:id/complete`
+
+Mark task as completed after admin review.
+
+**Request Body:**
+```json
+{
+  "reviewNotes": "Great work on the implementation"
+}
+```
+
+---
+
+## 📋 Problem Statement Routes (`/problem-statements`)
+
+### Upload CSV (Admin Only)
+**POST** `/api/problem-statements/csv`
+
+> 🔒 Requires admin authentication
+
+Upload problem statements via CSV file.
+
+**Request:** Multipart form data with `csv-file` field
+
+**Success Response (200):**
+```json
+{
+  "message": "CSV uploaded and processed successfully",
+  "count": 5
+}
+```
+
+### Get Problem Statements (Team Only)
+**GET** `/api/problem-statements`
+
+> 🔒 Requires team authentication
+
+**Success Response (200):**
+```json
+[
+  {
+    "id": 1,
+    "psId": "HO2K25001",
+    "title": "AI-powered Crop Monitoring",
+    "description": "Build an AI system to detect crop diseases from images.",
+    "category": "Agriculture",
+    "tags": ["AI", "Machine Learning", "Agriculture"]
+  }
+]
+```
+
+### Get Problem Statement by ID (Team Only)
+**GET** `/api/problem-statements/:id`
+
+> 🔒 Requires team authentication
+
+### Update Problem Statement (Admin Only)
+**PUT** `/api/problem-statements/:id`
+
+> 🔒 Requires admin authentication
+
+### Delete Problem Statement (Admin Only)
+**DELETE** `/api/problem-statements/:id`
+
+> 🔒 Requires admin authentication
+
+---
+
+## 👥 Team Routes (`/teams`) - Team Only
+
+> 🔒 All team routes require team authentication and valid teamId
+
+### Get Team Details
+**GET** `/api/teams/:teamId`
+
+**Success Response (200):**
+```json
+{
+  "id": 1,
+  "scc_id": "SCC001",
+  "title": "Green Farmers",
+  "problem_statement": {
+    "id": 1,
+    "title": "AI-powered Crop Monitoring",
+    "description": "Build an AI system..."
+  },
+  "gallery_images": ["https://example.com/img1.png"],
+  "team_members": [
+    {
+      "id": 1,
+      "name": "Alice Johnson",
+      "email": "alice@example.com",
+      "department": "CSE"
+    }
+  ]
+}
+```
+
+### Get Team Tasks
+**GET** `/api/teams/:teamId/tasks`
+
+**Success Response (200):**
+```json
+[
+  {
+    "id": 1,
+    "title": "Complete Frontend Design",
+    "difficulty": "medium",
+    "points": 50,
+    "status": "Pending",
+    "completed": false,
+    "in_review": false,
+    "round_num": 1
+  }
+]
+```
+
+### Get Specific Team Task
+**GET** `/api/teams/:teamId/tasks/:id`
+
+**Success Response (200):**
+```json
+{
+  "id": 1,
+  "title": "Complete Frontend Design",
+  "description": "Design the main dashboard",
+  "difficulty": "medium",
+  "points": 50,
+  "status": "Pending",
+  "completed": false,
+  "in_review": false,
+  "round_num": 1,
+  "timestamp": "2025-10-13T10:30:00.000Z",
+  "teamNotes": null,
+  "reviewNotes": null
+}
+```
+
+### Submit Task for Review
+**POST** `/api/teams/:teamId/tasks/:id/submit`
+
+**Request Body:**
+```json
+{
+  "teamNotes": "Completed the task as per requirements. Added responsive design and animations."
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "message": "Task submitted for review successfully",
+  "task": {
+    "id": 1,
+    "status": "InReview",
+    "in_review": true,
+    "teamNotes": "Completed the task as per requirements..."
+  }
+}
+```
+
+---
+
+## 📱 Status Codes
+
+| Code | Description |
+|------|-------------|
+| `200` | Success |
+| `201` | Created |
+| `400` | Bad Request |
+| `401` | Unauthorized |
+| `403` | Forbidden |
+| `404` | Not Found |
+| `500` | Internal Server Error |
+
+---
+
+## 🔑 Authentication Headers
+
+For requests requiring authentication, include the JWT token:
+
+```javascript
+// Cookie-based (automatic)
+// Cookies: admin_token=<jwt_token> or team_token=<jwt_token>
+
+// Or header-based
+headers: {
+  'Authorization': 'Bearer <jwt_token>'
+}
+```
+
+---
+
+## 📝 Notes
+
+- **Caching**: Leaderboard data is cached for 5 minutes
+- **File Uploads**: Only CSV files accepted for problem statements
+- **Task Status**: `Pending` → `InReview` → `Completed`
+- **Security**: All admin routes require admin authentication
+- **Team Routes**: Require valid team authentication and teamId validation
 
 ## Project Structure
 

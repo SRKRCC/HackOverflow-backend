@@ -1,48 +1,60 @@
-import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { PrismaClient } from "../../lib/generated/prisma/index.js";
 import type { Request, Response } from "express";
+import { verifyPasswordHash, generateToken } from "../utils/jwtService.js";
 
 dotenv.config();
 
 const prisma = new PrismaClient();
-const JWT_SECRET = process.env.SECRET_KEY;
 
-if (!JWT_SECRET) {
-  throw new Error("SECRET_KEY environment variable is not defined");
-}
+export const login = async (req: Request, res: Response) => {
+  const { role, username, password } = req.body;
 
-const login = async (req: Request, res: Response) => {
-  const { username, password } = req.body;
+  if (!role || !username || !password) {
+    return res.status(400).json({ error: "Username, and password are required" });
+  }
 
   try {
     let user: any = null;
     let role: "team" | "admin" | null = null;
 
-    // 1. Try Admin login
-    user = await prisma.admin.findUnique({ where: { email: username } });
-    if (user && user.password === password) {
-      role = "admin";
+    if (role === "admin") {
+      user = await prisma.admin.findUnique({ where: { email: username } });
+      if (user) {
+        try {
+          // Verify the hashed password
+          const decryptedPassword = verifyPasswordHash(user.password);
+          if (decryptedPassword === password) {
+            role = "admin";
+          }
+        } catch (error) {
+          return res.status(500).json({ error: "Internal server error, Please try again" });
+        }
+      }
     } else {
-      // 2. Try Team login
       user = await prisma.team.findFirst({ where: { scc_id: username } });
-      if (user && user.scc_password === password) {
-        role = "team";
+      if (user && user.scc_password) {
+        try {
+          const decryptedPassword = verifyPasswordHash(user.scc_password);
+          if (decryptedPassword === password) {
+            role = "team";
+          }
+        } catch (error) {
+          return res.status(500).json({ error: "Internal server error, Please try again" });
+        }
       }
     }
 
-
-    if (!role) {
-      return res.status(400).json({ error: "Invalid credentials" });
+    if (!user || !role) {
+      return res.status(400).json({ error: "No existing User, Please enter valid credentials" });
     }
-
 
     const payload =
       role === "team"
         ? { teamId: user.id, role: "team" }
         : { adminId: user.id, role: "admin" };
 
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "12h" });
+    const token = generateToken(payload, "12h");
 
     const cookieName = role === "admin" ? "admin_token" : "team_token";
 
@@ -53,15 +65,14 @@ const login = async (req: Request, res: Response) => {
       maxAge: 12 * 60 * 60 * 1000, // 12h
     });
 
-    res.json({ 
-      message: `${role} login successful`, 
+    res.json({
+      message: `${role} login successful`,
       role,
-      token // Include token in response for easier testing
+      userID: user.id,
+      token
     });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
-export default login;

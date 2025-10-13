@@ -1,5 +1,5 @@
-import jwt from "jsonwebtoken";
 import type { Request, Response, NextFunction } from "express";
+import { verifyToken } from "../utils/jwtService.js";
 
 export interface JwtPayload {
   adminId?: number;
@@ -41,7 +41,7 @@ export const authenticateAdmin = (
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    const decoded = verifyToken(token) as JwtPayload;
 
     if (decoded.role !== "admin") {
       return res.status(403).json({ error: "No rights to access this route" });

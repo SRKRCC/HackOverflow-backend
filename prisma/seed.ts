@@ -1,4 +1,5 @@
 import { PrismaClient } from "../lib/generated/prisma/index.js";
+import { generatePasswordHash } from "../src/utils/jwtService.js";
 
 const prisma = new PrismaClient();
 
@@ -65,7 +66,7 @@ async function seed() {
   const team1 = await prisma.team.create({
     data: {
       scc_id: "SCC001",
-      scc_password: "pass123",
+      scc_password: generatePasswordHash("pass123"),
       title: "Green Farmers",
       ps_id: ps1.id,
       gallery_images: ["https://example.com/img1.png"],
@@ -75,7 +76,7 @@ async function seed() {
   const team2 = await prisma.team.create({
     data: {
       scc_id: "SCC002",
-      scc_password: "pass456",
+      scc_password: generatePasswordHash("pass456"),
       title: "Eco Warriors",
       ps_id: ps2.id,
       gallery_images: ["https://example.com/img2.png"],
@@ -85,7 +86,7 @@ async function seed() {
   const team3 = await prisma.team.create({
     data: {
       scc_id: "SCC003",
-      scc_password: "pass789",
+      scc_password: generatePasswordHash("pass789"),
       title: "Power Savers",
       ps_id: ps3.id,
       gallery_images: ["https://example.com/img3.png"],
@@ -95,7 +96,7 @@ async function seed() {
   const team4 = await prisma.team.create({
     data: {
       scc_id: "SCC004",
-      scc_password: "pass321",
+      scc_password: generatePasswordHash("pass321"),
       title: "AI Gurus",
       ps_id: ps4.id,
       gallery_images: ["https://example.com/img4.png"],
@@ -105,7 +106,7 @@ async function seed() {
   const team5 = await prisma.team.create({
     data: {
       scc_id: "SCC005",
-      scc_password: "pass654",
+      scc_password: generatePasswordHash("pass654"),
       title: "Flood Fighters",
       ps_id: ps5.id,
       gallery_images: ["https://example.com/img5.png"],
@@ -148,7 +149,7 @@ async function seed() {
   await prisma.admin.create({
     data: {
       email: "admin@example.com",
-      password: "admin123",
+      password: generatePasswordHash("admin123"),
     },
   });
 
