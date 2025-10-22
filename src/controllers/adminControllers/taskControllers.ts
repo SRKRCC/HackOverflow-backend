@@ -20,6 +20,7 @@ export const createTask = async (req: Request, res: Response) => {
       team = await prisma.team.findFirst({
         where: { scc_id: teamId }
       });
+      console.log(teamId);
       if (!team) {
         return res.status(404).json({ error: `Team with scc_id ${teamId} not found` });
       }
@@ -61,6 +62,10 @@ export const getTasks = async (req: Request, res: Response) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+
+
 
 // Get one task
 export const getTaskById = async (req: Request, res: Response) => {

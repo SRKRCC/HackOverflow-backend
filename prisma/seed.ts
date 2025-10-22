@@ -80,6 +80,7 @@ async function seed() {
       title: "Eco Warriors",
       ps_id: ps2.id,
       gallery_images: ["https://example.com/img2.png"],
+      
     },
   });
 
@@ -110,6 +111,15 @@ async function seed() {
       title: "Flood Fighters",
       ps_id: ps5.id,
       gallery_images: ["https://example.com/img5.png"],
+    },
+  });
+
+  const announcement = await prisma.announcement.create({
+    data: {
+      title: "Lunch Break",
+      description: "A short break to relax and recharge before the next session.",
+      startTime: new Date("2025-10-22T13:00:00Z"), // 1:00 PM UTC
+      endTime: new Date("2025-10-22T13:30:00Z"),   // 1:30 PM UTC
     },
   });
 
