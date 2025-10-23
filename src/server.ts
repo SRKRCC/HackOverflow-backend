@@ -8,6 +8,7 @@ import taskRoutes from "./routes/adminRoutes/taskRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import psRoutes from "./routes/adminRoutes/psRoutes.js"
 import adminTeamRoutes from "./routes/adminRoutes/adminTeamRoutes.js";
+import announcementRouter from "./routes/adminRoutes/announcementRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,6 +29,7 @@ app.use("/api/leaderboards", leaderboardRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/problem-statements", psRoutes);
+app.use("/api/admin/announcements", announcementRouter);
 
 // Initialize leaderboard cache
 fetchLeaderboard();

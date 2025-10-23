@@ -114,7 +114,7 @@ export const getStatementById = async (req: Request, res: Response) => {
     }
 
     const statement = await prisma.problemStatement.findUnique({
-      where: { psId },
+      where: { id : Number(psId) },
       select: statementSelect,
     });
 
