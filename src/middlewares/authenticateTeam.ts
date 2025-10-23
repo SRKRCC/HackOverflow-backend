@@ -46,7 +46,6 @@ export const authenticateTeam = (
     if (decoded.role !== "team") {
       return res.status(403).json({ error: "No rights to access this route" });
     }
-
     req.user = decoded;
     next();
   } catch (error: any) {

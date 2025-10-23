@@ -80,3 +80,12 @@ model Admin {
   email    String @unique
   password String
 }
+
+
+model Announcement {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  startTime   DateTime
+  endTime     DateTime
+}

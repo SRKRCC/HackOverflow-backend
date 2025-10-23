@@ -9,7 +9,7 @@ const router = Router();
 router.use(logger);
 
 // Team details
-router.get("/:teamId", validateTeamId, authenticateTeam, getDetails);
+router.get("/", authenticateTeam, getDetails);
 
 // Task-related routes for teams
 router.get("/:teamId/tasks", validateTeamId, authenticateTeam, getTeamTasks); // Get all tasks for team
