@@ -24,9 +24,46 @@ jobs:
         npm ci
         npm prune --production
         rm -rf node_modules/.cache/serverless-framework || true
+        # Remove dev dependencies and unnecessary files
+        rm -rf node_modules/@types || true
+        rm -rf node_modules/typescript || true
+        rm -rf node_modules/ts-node || true
+        rm -rf node_modules/nodemon || true
+        rm -rf node_modules/serverless-offline || true
+        rm -rf node_modules/prisma || true
+        rm -rf node_modules/tsx || true
+        # Remove documentation and test files from node_modules
+        find node_modules -name "*.md" -delete || true
+        find node_modules -name "*.ts" -delete || true
+        find node_modules -name "*.map" -delete || true
+        find node_modules -type d -name "test" -exec rm -rf {} + || true
+        find node_modules -type d -name "tests" -exec rm -rf {} + || true
+        find node_modules -type d -name "docs" -exec rm -rf {} + || true
+        find node_modules -type d -name "examples" -exec rm -rf {} + || true
+        find node_modules -name "LICENSE*" -delete || true
+        find node_modules -name "CHANGELOG*" -delete || true
+
+    - name: Build TypeScript
+      run: npm run build
 
     - name: Generate Prisma Client
       run: npx prisma generate
+
+    - name: Optimize for Lambda deployment
+      run: |
+        # Install only production dependencies again to ensure clean state
+        npm install --production --no-optional
+        # Remove unnecessary files to reduce package size
+        find node_modules -name "*.d.ts" -delete || true
+        find node_modules -name "*.ts" -delete || true
+        find node_modules -name "*.map" -delete || true
+        find node_modules -name "benchmark*" -type d -exec rm -rf {} + || true
+        find node_modules -name "example*" -type d -exec rm -rf {} + || true
+        # Check final package size
+        echo "Package size breakdown:"
+        du -sh node_modules lib dist 2>/dev/null | sort -hr || true
+        echo "Total deployment size:"
+        du -sh . --exclude=.git --exclude=.github | head -1
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4

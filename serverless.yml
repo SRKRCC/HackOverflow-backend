@@ -14,13 +14,17 @@ provider:
     SECRET_KEY: ${env:SECRET_KEY}
     FRONTEND_URL: ${env:FRONTEND_URL}
   
+  # Increase memory and timeout for better performance
+  memorySize: 512
+  timeout: 30
+  
   apiGateway:
     binaryMediaTypes:
       - 'multipart/form-data'
 
 functions:
   api:
-    handler: lambda.handler
+    handler: dist/lambda.handler
     events:
       - http:
           path: /{proxy+}
@@ -29,46 +33,49 @@ functions:
     # Keep warm to reduce cold starts
     reservedConcurrency: 5
 
-# plugins:
-#   - serverless-offline
-
-
 package:
-  # Exclude unnecessary files and dev dependencies
   patterns:
+    # Exclude source and unnecessary files
+    - '!src/**'
+    - '!prisma/**'
     - '!.git/**'
     - '!.github/**'
     - '!README.md'
     - '!DEPLOYMENT.md'
-    - '!prisma/**'
-    - '!src/**'
     - '!tsconfig.json'
+    - '!lambda.ts'
     - '!*.md'
-    - '!test/**'
-    - '!tests/**'
     - '!.env*'
     - '!nodemon.json'
-    # Exclude dev dependencies from node_modules
-    - '!node_modules/**/README.md'
-    - '!node_modules/**/CHANGELOG.md'
-    - '!node_modules/**/LICENSE*'
-    - '!node_modules/**/test/**'
-    - '!node_modules/**/tests/**'
-    - '!node_modules/**/*.md'
-    - '!node_modules/**/.nyc_output/**'
-    - '!node_modules/**/coverage/**'
-    - '!node_modules/**/.git/**'
-    # Exclude specific dev dependencies
-    - '!node_modules/nodemon/**'
-    - '!node_modules/ts-node/**'
-    - '!node_modules/typescript/**'
+    # Include Prisma generated files but exclude some large optional files
+    - '!lib/generated/prisma/runtime/query_engine*'
+    # Exclude dev dependencies
     - '!node_modules/@types/**'
+    - '!node_modules/typescript/**'
+    - '!node_modules/ts-node/**'
+    - '!node_modules/nodemon/**'
     - '!node_modules/serverless-offline/**'
     - '!node_modules/prisma/**'
-    # Include only necessary files
-    - 'lambda.ts'
-    - 'lambda.js'
-    - 'dist/**'
-    - 'lib/generated/prisma/**'
-    - 'package.json'
-    - 'node_modules/**'
+    - '!node_modules/tsx/**'
+    # Exclude documentation and test files
+    - '!node_modules/**/README.md'
+    - '!node_modules/**/readme.md'
+    - '!node_modules/**/CHANGELOG.md'
+    - '!node_modules/**/changelog.md'
+    - '!node_modules/**/LICENSE*'
+    - '!node_modules/**/license*'
+    - '!node_modules/**/test/**'
+    - '!node_modules/**/tests/**'
+    - '!node_modules/**/spec/**'
+    - '!node_modules/**/docs/**'
+    - '!node_modules/**/examples/**'
+    - '!node_modules/**/*.md'
+    - '!node_modules/**/.git/**'
+    - '!node_modules/**/.nyc_output/**'
+    - '!node_modules/**/coverage/**'
+    - '!node_modules/**/.travis.yml'
+    - '!node_modules/**/.eslintrc*'
+    - '!node_modules/**/Gruntfile.js'
+    - '!node_modules/**/Makefile'
+    - '!node_modules/**/*.ts'
+    - '!node_modules/**/*.map'
