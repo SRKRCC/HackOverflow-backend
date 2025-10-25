@@ -1,6 +1,7 @@
 node_modules/
 /lib/generated/prisma
 .env
+env.json
 dist/
 
-.serverless/
+.aws-sam/

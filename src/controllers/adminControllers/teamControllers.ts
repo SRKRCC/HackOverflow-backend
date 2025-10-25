@@ -1,4 +1,4 @@
-import { PrismaClient } from '../../../lib/generated/prisma/index.js';
+import { PrismaClient } from "@prisma/client";
 import type { Request, Response } from "express";
 const prisma = new PrismaClient();
 
@@ -81,7 +81,7 @@ export const getAllTeams = async (req: Request, res: Response) => {
             },
         });
 
-        const formattedTeams = teams.map(team => ({
+        const formattedTeams = teams.map((team: any) => ({
             teamId: team.id,
             scc_id : team.scc_id ,
             title: team.title,

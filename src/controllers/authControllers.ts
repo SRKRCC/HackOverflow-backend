@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import { PrismaClient } from "../../lib/generated/prisma/index.js";
+import { PrismaClient } from "@prisma/client";
 import type { Request, Response } from "express";
 import { verifyPasswordHash, generateToken, generatePasswordHash } from "../utils/jwtService.js";
 
