@@ -40,5 +40,4 @@ package:
     - '!README.md'
     - '!tsconfig.json'
     - '!lambda.ts'
-    - '!node_modules/aws-sdk/**'
     - '!node_modules/prisma/**'
