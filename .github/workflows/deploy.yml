@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-    workflow_dispatch:
 
 jobs:
   deploy:
@@ -24,9 +23,7 @@ jobs:
       run: |
         npm ci
         npm prune --production
-
-    - name: Clean npm cache
-      run: npm cache clean --force
+        rm -rf node_modules/.cache/serverless-framework || true
 
     - name: Generate Prisma Client
       run: npx prisma generate
