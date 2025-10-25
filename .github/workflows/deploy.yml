@@ -1,0 +1,114 @@
+name: Deploy HackOverflow Backend
+
+on:
+  push:
+    branches: [ master ]
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  STACK_NAME: ${{ secrets.STACK_NAME }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript compilation
+        run: npx tsc --noEmit
+
+      - name: Check for linting issues (optional)
+        run: npm run lint || echo "No lint script found, skipping..."
+        continue-on-error: true
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Python for SAM CLI
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Setup SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Build SAM application
+        run: sam build --use-container
+
+      - name: Deploy SAM application
+        run: |
+          sam deploy \
+            --stack-name ${{ secrets.STACK_NAME }} \
+            --region ${{ secrets.AWS_REGION }} \
+            --capabilities CAPABILITY_IAM \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+              DatabaseURL="${{ secrets.DATABASE_URL }}" \
+              SecretKey="${{ secrets.SECRET_KEY }}" \
+              FrontendURL="${{ secrets.FRONTEND_URL }}"
+
+      - name: Get API Gateway URL
+        id: get-url
+        run: |
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name ${{ secrets.STACK_NAME }} \
+            --region ${{ secrets.AWS_REGION }} \
+            --query 'Stacks[0].Outputs[?OutputKey==\`ApiUrl\`].OutputValue' \
+            --output text)
+          echo "api-url=$API_URL" >> $GITHUB_OUTPUT
+          echo "API deployed to: $API_URL"
+
+      - name: Test deployment
+        run: |
+          sleep 10
+          curl -f "${{ steps.get-url.outputs.api-url }}/hello" || exit 1
+          echo "Health check passed!"
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "Deployment successful!"
+            echo "API URL: ${{ steps.get-url.outputs.api-url }}"
+          else
+            echo "Deployment failed!"
+            exit 1
+          fi
