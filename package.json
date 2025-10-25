@@ -8,11 +8,7 @@
     "start": "nodemon --exec \"npx tsx\" src/server.ts",
     "build": "npx tsc && npx prisma generate",
     "dev": "nodemon --exec \"npx tsx\" src/server.ts",
-    "dev:serverless": "npx serverless offline",
-    "deploy": "npx prisma generate && npx serverless deploy",
-    "deploy:prod": "npx prisma generate && npx serverless deploy --stage prod",
-    "logs": "npx serverless logs -f api -t",
-    "remove": "npx serverless remove",
+
     "db:seed": "npx tsx prisma/seed.ts",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate deploy"
@@ -48,6 +44,7 @@
     "@types/node": "^24.3.0",
     "nodemon": "^3.1.10",
     "prisma": "^6.18.0",
+    "serverless-dotenv-plugin": "^6.0.0",
     "serverless-offline": "^13.9.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.5",
