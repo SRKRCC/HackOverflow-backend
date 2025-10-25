@@ -1,0 +1,72 @@
+# Git and version control
+.git/
+.gitignore
+
+# Environment files
+.env
+.env.example
+.env.local
+.env.*.local
+
+# Node modules (will be installed in container)
+node_modules/
+
+# Build artifacts and cache
+.aws-sam/
+.npm/
+npm-debug.log*
+.nyc_output
+
+# TypeScript source (we copy compiled dist/)
+src/
+
+# Development files
+README.md
+DEPLOYMENT.md
+*.md
+nodemon.json
+.eslintrc.*
+.prettierrc.*
+jest.config.*
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# SAM and serverless artifacts
+samconfig.toml
+layers/
+template.yaml
+build.cjs
+*.yaml
+*.yml
+
+# Development dependencies we don't need
+tsconfig.json
+.npmignore

@@ -14,13 +14,17 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors({
-  origin: "https://hackoverflow.srkrcodingclub.in",
+  origin: process.env.FRONTEND_URL,
   credentials: true,                          
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+app.get("/hello", (req, res) => {
+  res.status(200).json({ message: "Hello, HackOverflow Server is running!" });
+});
 
 // app.use("/api/members", memberRoutes);
 app.use("/api/teams", teamRoutes);

@@ -14,38 +14,29 @@ Parameters:
   FrontendURL:
     Type: String
     Description: Frontend URL for CORS
-    Default: "https://your-frontend-domain.com"
+    Default: "https://hackoverflow.srkrcodingclub.in"
 
 Resources:
-  # HTTP API Gateway with explicit stage configuration
-  HackOverflowHttpApi:
-    Type: AWS::Serverless::HttpApi
+  # REST API Gateway with explicit stage configuration
+  HackOverflowRestApi:
+    Type: AWS::Serverless::Api
     Properties:
       StageName: prod
-      CorsConfiguration:
-        AllowOrigins:
-          - !Ref FrontendURL
-        AllowHeaders:
-          - Content-Type
-          - Authorization
-          - X-Amz-Date
-          - X-Api-Key
-          - X-Amz-Security-Token
-        AllowMethods:
-          - GET
-          - POST
-          - PUT
-          - DELETE
-          - OPTIONS
+      Cors:
+        AllowOrigin: !Sub "'${FrontendURL}'"
+        AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token,Accept,Accept-Encoding,Accept-Language,Cache-Control,Connection,Host,Origin,Pragma,Referer,User-Agent,X-Requested-With'"
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
         AllowCredentials: true
+      BinaryMediaTypes:
+        - "multipart/form-data"
+        - "image/*"
+        - "application/octet-stream"
 
   HackOverflowAPI:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: dist/
-      Handler: lambda.handler
-      Runtime: nodejs20.x
-      Architectures: [arm64]
+      PackageType: Image
+      Architectures: [x86_64]
       MemorySize: 1024
       Timeout: 30
       Environment:
@@ -54,24 +45,29 @@ Resources:
           DATABASE_URL: !Ref DatabaseURL
           SECRET_KEY: !Ref SecretKey
           FRONTEND_URL: !Ref FrontendURL
+          AWS_LAMBDA_NODEJS_DISABLE_CALLBACK_WARNING: true
       Events:
         ApiEvent:
-          Type: HttpApi
+          Type: Api
           Properties:
-            ApiId: !Ref HackOverflowHttpApi
+            RestApiId: !Ref HackOverflowRestApi
             Path: /{proxy+}
             Method: ANY
         RootEvent:
-          Type: HttpApi
+          Type: Api
           Properties:
-            ApiId: !Ref HackOverflowHttpApi
+            RestApiId: !Ref HackOverflowRestApi
             Path: /
             Method: ANY
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ./
+      DockerTag: nodejs20.x-v1
 
 Outputs:
   ApiUrl:
-    Description: "HTTP API Gateway endpoint URL for prod stage"
-    Value: !Sub "https://${HackOverflowHttpApi}.execute-api.${AWS::Region}.amazonaws.com/prod"
+    Description: "REST API Gateway endpoint URL for prod stage"
+    Value: !Sub "https://${HackOverflowRestApi}.execute-api.${AWS::Region}.amazonaws.com/prod"
   ApiId:
     Description: "API Gateway ID"
-    Value: !Ref HackOverflowHttpApi
+    Value: !Ref HackOverflowRestApi

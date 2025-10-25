@@ -1,0 +1,33 @@
+# Development files
+.git/
+.gitignore
+.env
+.env.example
+README.md
+DEPLOYMENT.md
+.aws-sam/
+samconfig.toml
+nodemon.json
+tsconfig.json
+lib/
+
+# Development dependencies that shouldn't be in production
+node_modules/@types/
+node_modules/typescript/
+node_modules/ts-node/
+node_modules/nodemon/
+node_modules/tsx/
+
+# Large Prisma dependencies we don't need
+node_modules/effect/
+node_modules/fast-check/
+
+# Prisma development files
+node_modules/@prisma/engines/
+node_modules/prisma/build/
+node_modules/prisma/src/
+
+# Logs
+*.log
+npm-debug.log*
+.DS_Store
