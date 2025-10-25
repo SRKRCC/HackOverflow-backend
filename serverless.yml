@@ -42,4 +42,3 @@ package:
     - '!lambda.ts'
     - '!node_modules/aws-sdk/**'
     - '!node_modules/prisma/**'
-    - '!node_modules/@aws-sdk/**'
