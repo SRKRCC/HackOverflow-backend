@@ -7,6 +7,7 @@ provider:
   runtime: nodejs18.x
   region: ap-south-1
   stage: prod
+  maxLambdaSize: 500MB
 
   environment:
     NODE_ENV: production
@@ -32,13 +33,6 @@ functions:
 # plugins:
 #   - serverless-offline
 
-iamRoleStatements:
-  - Effect: Allow
-    Action:
-      - logs:CreateLogGroup
-      - logs:CreateLogStream
-      - logs:PutLogEvents
-    Resource: arn:aws:logs:ap-south-1:*:*
 
 package:
   # Include only necessary files
