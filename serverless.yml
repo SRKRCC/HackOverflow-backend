@@ -49,7 +49,7 @@ package:
     - '!nodemon.json'
     # Include Prisma generated files but exclude some large optional files
     - '!lib/generated/prisma/runtime/query_engine*'
-    # Exclude dev dependencies
+    # Exclude dev dependencies and large packages
     - '!node_modules/@types/**'
     - '!node_modules/typescript/**'
     - '!node_modules/ts-node/**'
@@ -57,6 +57,10 @@ package:
     - '!node_modules/serverless-offline/**'
     - '!node_modules/prisma/**'
     - '!node_modules/tsx/**'
+    - '!node_modules/aws-sdk/**'
+    - '!node_modules/@aws-sdk/**'
+    - '!node_modules/effect/**'
+    - '!node_modules/serverless/**'
     # Exclude documentation and test files
     - '!node_modules/**/README.md'
     - '!node_modules/**/readme.md'

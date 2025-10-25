@@ -19,19 +19,34 @@ jobs:
         node-version: '18'
         cache: 'npm'
 
-    - name: Install dependencies
+    - name: Install all dependencies (including dev for build)
       run: |
         npm ci
-        npm prune --production
         rm -rf node_modules/.cache/serverless-framework || true
-        # Remove dev dependencies and unnecessary files
-        rm -rf node_modules/@types || true
-        rm -rf node_modules/typescript || true
+
+    - name: Build TypeScript
+      run: npm run build
+
+    - name: Install Serverless Framework v3
+      run: npm install serverless@3
+
+    - name: Clean up after build
+      run: |
+        # Remove dev dependencies after building
+        npm prune --production
+        # Remove large packages not needed at runtime
+        rm -rf node_modules/aws-sdk || true  # 101MB - not needed in Lambda
+        rm -rf node_modules/prisma || true   # 67MB - CLI tool not needed
+        rm -rf node_modules/typescript || true  # 23MB - build tool
+        rm -rf node_modules/@types || true   # 6MB - TypeScript definitions
         rm -rf node_modules/ts-node || true
         rm -rf node_modules/nodemon || true
         rm -rf node_modules/serverless-offline || true
-        rm -rf node_modules/prisma || true
         rm -rf node_modules/tsx || true
+        rm -rf node_modules/effect || true   # 33MB - may not be needed
+        rm -rf node_modules/@aws-sdk || true # 31MB - may be transitive dependency
+        # Remove serverless framework from node_modules if present
+        rm -rf node_modules/serverless || true
         # Remove documentation and test files from node_modules
         find node_modules -name "*.md" -delete || true
         find node_modules -name "*.ts" -delete || true
@@ -42,9 +57,6 @@ jobs:
         find node_modules -type d -name "examples" -exec rm -rf {} + || true
         find node_modules -name "LICENSE*" -delete || true
         find node_modules -name "CHANGELOG*" -delete || true
-
-    - name: Build TypeScript
-      run: npm run build
 
     - name: Generate Prisma Client
       run: npx prisma generate
