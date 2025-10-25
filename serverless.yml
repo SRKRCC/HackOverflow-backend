@@ -7,7 +7,6 @@ provider:
   runtime: nodejs18.x
   region: ap-south-1
   stage: prod
-  maxLambdaSize: 500MB
 
   environment:
     NODE_ENV: production
