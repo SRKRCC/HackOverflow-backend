@@ -1,0 +1,51 @@
+service: hackoverflow-backend
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ap-south-1
+  stage: prod
+
+  environment:
+    NODE_ENV: production
+    DATABASE_URL: ${env:DATABASE_URL}
+    SECRET_KEY: ${env:SECRET_KEY}
+    FRONTEND_URL: ${env:FRONTEND_URL}
+  
+  apiGateway:
+    binaryMediaTypes:
+      - 'multipart/form-data'
+
+functions:
+  api:
+    handler: lambda.handler
+    events:
+      - http:
+          path: /{proxy+}
+          method: ANY
+    
+    # Keep warm to reduce cold starts
+    reservedConcurrency: 5
+
+# plugins:
+#   - serverless-offline
+
+iamRoleStatements:
+  - Effect: Allow
+    Action:
+      - logs:CreateLogGroup
+      - logs:CreateLogStream
+      - logs:PutLogEvents
+    Resource: arn:aws:logs:ap-south-1:*:*
+
+package:
+  # Include only necessary files
+  patterns:
+    - '!.git/**'
+    - '!.github/**'
+    - '!node_modules/.cache/**'
+    - '!README.md'
+    - '!DEPLOYMENT.md'
+    - 'lib/generated/prisma/**'
