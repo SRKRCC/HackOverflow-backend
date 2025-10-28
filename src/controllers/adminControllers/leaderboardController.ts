@@ -18,7 +18,7 @@ export const fetchLeaderboard = async (): Promise<void> => {
     });
 
     const leaderboard: LeaderboardEntry[] = teams.map((team: any) => ({
-      id: team.id,
+      id: team.scc_id,
       title: team.title,
       totalPoints: team.tasks.reduce((sum: number, task: any) => sum + task.points, 0),
     }));
@@ -26,7 +26,7 @@ export const fetchLeaderboard = async (): Promise<void> => {
     leaderboard.sort((a, b) => b.totalPoints - a.totalPoints);
 
     cache.set('leaderboard', leaderboard);
-    console.log('Leaderboard cache updated at', new Date().toISOString());
+    console.log('Leaderboard cache updated at', leaderboard ,new Date().toISOString());
   } catch (error) {
     console.error('Error fetching leaderboard:', error);
   }
