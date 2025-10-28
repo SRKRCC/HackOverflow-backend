@@ -15,6 +15,17 @@ Parameters:
     Type: String
     Description: Frontend URL for CORS
     Default: "https://hackoverflow.srkrcodingclub.in"
+  CloudinaryCloudName:
+    Type: String
+    Description: Cloudinary Cloud Name
+  CloudinaryAPIKey:
+    Type: String
+    Description: Cloudinary API Key
+    NoEcho: true
+  CloudinaryAPISecret:
+    Type: String
+    Description: Cloudinary API Secret
+    NoEcho: true
 
 Resources:
   # REST API Gateway with explicit stage configuration
@@ -45,6 +56,9 @@ Resources:
           DATABASE_URL: !Ref DatabaseURL
           SECRET_KEY: !Ref SecretKey
           FRONTEND_URL: !Ref FrontendURL
+          CLOUDINARY_CLOUD_NAME: !Ref CloudinaryCloudName
+          CLOUDINARY_API_KEY: !Ref CloudinaryAPIKey
+          CLOUDINARY_API_SECRET: !Ref CloudinaryAPISecret
           AWS_LAMBDA_NODEJS_DISABLE_CALLBACK_WARNING: true
       Events:
         ApiEvent:

@@ -83,7 +83,10 @@ jobs:
             --parameter-overrides \
               DatabaseURL="${{ secrets.DATABASE_URL }}" \
               SecretKey="${{ secrets.SECRET_KEY }}" \
-              FrontendURL="${{ secrets.FRONTEND_URL }}"
+              FrontendURL="${{ secrets.FRONTEND_URL }}" \
+              CloudinaryCloudName="${{ secrets.CLOUDINARY_CLOUD_NAME }}" \
+              CloudinaryAPIKey="${{ secrets.CLOUDINARY_API_KEY }}" \
+              CloudinaryAPISecret="${{ secrets.CLOUDINARY_API_SECRET }}"
 
       - name: Deployment completed
         run: |
