@@ -7,9 +7,11 @@ const prisma = new PrismaClient();
 export const getTeamTasks = async (req: Request, res: Response) => {
   try {
     // Get the processed teamId from the validateTeamId middleware
-    const teamId = (req as any).teamId;
+    const teamId = (req as any).user.teamId;
+    
     
     if (!teamId) {
+      console.log((req as any).user);
       return res.status(400).json({ error: 'Team ID is required' });
     }
     

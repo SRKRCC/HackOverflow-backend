@@ -4,11 +4,9 @@ const prisma = new PrismaClient();
 
 export const getDetails = async (req: Request, res: Response) => {
     const teamId: number = (req as any).user.teamId;
-
     if (!teamId) {
         return res.status(400).json({ error: "teamId is missing" });
     }
-
     try {
         const team = await prisma.team.findUnique({
             where: { id: teamId },
