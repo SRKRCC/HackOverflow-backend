@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { error } from "console";
 import type { Request, Response } from "express";
 
 const prisma = new PrismaClient();
@@ -64,6 +65,20 @@ export const submitTaskForReview = async (req: Request, res: Response) => {
 // Get task details for a specific task
 export const getTaskById = async (req: Request, res: Response) => {
   try {
+    const teamId = (req as any).user.teamId;
+
+    if (!teamId) {
+      return res.status(404).json({ error: "Team ID not found" });
+    }
+
+    const team = await prisma.team.findUnique({
+      where: { id: Number(teamId) },
+    });
+
+    if (!team) {
+      return res.status(404).json({ error: "Team not found" });
+    }
+    
     const { id } = req.params;
     
     const task = await prisma.task.findUnique({

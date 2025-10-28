@@ -5,3 +5,5 @@ env.json
 dist/
 
 .aws-sam/
+
+.vscode/

@@ -2,14 +2,10 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import teamRoutes from "./routes/teamRoutes/teamRoutes.js";
-import leaderboardRoutes from './routes/adminRoutes/leaderboardRoutes.js';
 import { fetchLeaderboard } from './controllers/adminControllers/leaderboardController.js';
-import taskRoutes from "./routes/adminRoutes/taskRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
-import psRoutes from "./routes/adminRoutes/psRoutes.js"
-import adminTeamRoutes from "./routes/adminRoutes/adminTeamRoutes.js";
-import announcementRouter from "./routes/adminRoutes/announcementRoutes.js";
-import galleryRouter from "./routes/adminRoutes/galleryRoutes.js";
+import adminRoutes from './routes/adminRoutes.js';
+import publicRoutes from "./routes/publicRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -27,15 +23,10 @@ app.get("/hello", (req, res) => {
   res.status(200).json({ message: "Hello, HackOverflow Server is running!" });
 });
 
-// app.use("/api/members", memberRoutes);
 app.use("/api/teams", teamRoutes);
-app.use("/api/admin/teams", adminTeamRoutes);
-app.use("/api/leaderboards", leaderboardRoutes);
-app.use("/api/tasks", taskRoutes);
+app.use('/api/admin', adminRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/problem-statements", psRoutes);
-app.use("/api/admin/announcements", announcementRouter);
-app.use("/api/admin/gallery" , galleryRouter) ;
+app.use("/api/public", publicRoutes);
 
 // Initialize leaderboard cache
 fetchLeaderboard();

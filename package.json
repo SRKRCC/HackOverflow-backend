@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon --exec \"npx tsx\" src/server.ts",
-    "build": "npx tsc && npx prisma generate",
+    "build": "npx tsc && npx prisma generate --no-engine",
     "dev": "nodemon --exec \"npx tsx\" src/server.ts",
     "db:seed": "npx tsx prisma/seed.ts",
     "db:push": "prisma db push",
@@ -48,8 +48,5 @@
     "ts-node": "^10.9.2",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2"
-  },
-  "prisma": {
-    "seed": "npx tsx prisma/seed.ts"
   }
 }

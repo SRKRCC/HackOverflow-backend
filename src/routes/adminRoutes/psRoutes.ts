@@ -3,12 +3,9 @@ import multer from "multer";
 import {
   uploadCsv,
   deleteStatement,
-  getStatementById,
-  getStatements,
   updateStatement,
 } from "../../controllers/adminControllers/psControllers.js";
 import { authenticateAdmin } from "../../middlewares/authenticateAdmin.js";
-import { authenticateTeam } from "../../middlewares/authenticateTeam.js";
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
@@ -26,14 +23,10 @@ const upload = multer({
 });
 
 const router = Router();
-
+router.use(authenticateAdmin);
 // Admin routes
-router.post("/csv",authenticateAdmin,upload.single("csv-file"),uploadCsv);
-router.put("/:id", authenticateAdmin, updateStatement);
-router.delete("/:id", authenticateAdmin, deleteStatement);
-
-// Team routes
-router.get("/:id", authenticateTeam, getStatementById);
-router.get("/", authenticateTeam, getStatements);
+router.post("/csv", upload.single("csv-file"), uploadCsv);
+router.put("/:id", updateStatement);
+router.delete("/:id", deleteStatement);
 
 export default router;

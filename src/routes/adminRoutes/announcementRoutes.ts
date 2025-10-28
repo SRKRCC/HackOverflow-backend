@@ -3,24 +3,16 @@ import { createAnnouncement, deleteAnnouncement, getActiveAnnouncements, getAnno
 import { authenticateAdmin } from '../../middlewares/authenticateAdmin.js';
 
 
-const announcementRouter = express.Router();
+const announcementRoutes = express.Router();
 
-// Get all announcements
-announcementRouter.get('/', getAnnouncements);
+announcementRoutes.use(authenticateAdmin);
 
-// Get active announcements
-announcementRouter.get('/active', getActiveAnnouncements);
+announcementRoutes.get('/', getAnnouncements);
+announcementRoutes.get('/active', getActiveAnnouncements);
+announcementRoutes.get('/:id', getAnnouncementById);
 
-// Get single announcement by ID
-announcementRouter.get('/:id', getAnnouncementById);
+announcementRoutes.post('/', createAnnouncement);
+announcementRoutes.put('/:id', updateAnnouncement);
+announcementRoutes.delete('/:id', deleteAnnouncement);
 
-// Create new announcement
-announcementRouter.post('/',authenticateAdmin , createAnnouncement);
-
-// Update announcement
-announcementRouter.put('/:id',authenticateAdmin , updateAnnouncement);
-
-// Delete announcement
-announcementRouter.delete('/:id',authenticateAdmin , deleteAnnouncement);
-
-export default announcementRouter;
+export default announcementRoutes;

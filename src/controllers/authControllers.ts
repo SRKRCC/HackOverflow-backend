@@ -62,7 +62,7 @@ export const login = async (req: Request, res: Response) => {
     res.cookie(cookieName, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
       maxAge: 12 * 60 * 60 * 1000, // 12h
     });
 
@@ -79,19 +79,12 @@ export const login = async (req: Request, res: Response) => {
 };
 
 
-export const logout = async (req: Request, res: Response) => {
+export const teamLogout = async (req: Request, res: Response) => {
   try {
-    // Clear both possible tokens (team or admin)
-    res.clearCookie("admin_token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-    });
-
     res.clearCookie("team_token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
     });
 
     return res.status(200).json({
@@ -106,3 +99,26 @@ export const logout = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const adminLogout = async (req: Request, res: Response) => {
+  try {
+    // Clear both possible tokens (team or admin)
+    res.clearCookie("admin_token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+    });
+
+    return res.status(200).json({
+      message: "Logout successful",
+      success: true,
+    });
+  } catch (error) {
+    console.error("Logout error:", error);
+    return res.status(500).json({
+      error: "Internal server error while logging out",
+      success: false,
+    });
+  }
+};
+

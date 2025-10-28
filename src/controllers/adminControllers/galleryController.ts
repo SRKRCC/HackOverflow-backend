@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
-import { PrismaClient } from '../../../lib/generated/prisma/index.js';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 

@@ -83,7 +83,6 @@ export const getAllTeams = async (req: Request, res: Response) => {
         const formattedTeams = teams.map((team: any) => ({
             teamId: team.id,
             scc_id : team.scc_id ,
-            scc_id : team.scc_id ,
             title: team.title,
             members: team.team_members,
         }));
