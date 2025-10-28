@@ -20,5 +20,4 @@ router.get("/:id", getTaskById); // Get one task
 router.put("/:id", updateTask); // Update task
 router.delete("/:id", deleteTask); // Delete task
 router.post("/:id/complete", completeTask); // Admin completes task after review
-
 export default router;

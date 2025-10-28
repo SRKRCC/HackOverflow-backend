@@ -12,8 +12,8 @@ router.use(logger);
 router.get("/", authenticateTeam, getDetails);
 
 // Task-related routes for teams
-router.get("/:teamId/tasks", validateTeamId, authenticateTeam, getTeamTasks); // Get all tasks for team
+router.get("/team-tasks", authenticateTeam, getTeamTasks); // Get all tasks for team
 router.get("/:teamId/tasks/:id", validateTeamId, authenticateTeam, getTaskById); // Get specific task
-router.post("/:teamId/tasks/:id/submit", validateTeamId, authenticateTeam, submitTaskForReview); // Submit task for review
+router.post("/tasks/:id/submit", authenticateTeam, submitTaskForReview); // Submit task for review
 
 export default router;

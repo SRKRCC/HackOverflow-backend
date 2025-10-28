@@ -9,6 +9,7 @@ interface LeaderboardEntry {
   id: number;
   title: string;
   totalPoints: number;
+  rank : number
 }
 
 export const fetchLeaderboard = async (): Promise<void> => {
@@ -18,19 +19,30 @@ export const fetchLeaderboard = async (): Promise<void> => {
     });
 
     const leaderboard: LeaderboardEntry[] = teams.map((team: any) => ({
-      id: team.id,
-      title: team.title,
-      totalPoints: team.tasks.reduce((sum: number, task: any) => sum + task.points, 0),
+      id: team.id,                     // match your LeaderboardEntry interface
+      title: team.title,                // renamed accordingly
+      totalPoints: team.tasks
+        .filter((task: any) => task.status === "Completed")  // ✅ only completed
+        .reduce((sum: number, task: any) => sum + (task.points || 0), 0),
+      completedTasks: team.tasks.filter((task: any) => task.status === "Completed").length,
+      rank: 0, // will update after sorting
     }));
 
+    // ✅ Sort by total points descending
     leaderboard.sort((a, b) => b.totalPoints - a.totalPoints);
 
-    cache.set('leaderboard', leaderboard);
-    console.log('Leaderboard cache updated at', new Date().toISOString());
+    // ✅ Assign ranks after sorting
+    leaderboard.forEach((entry, index) => {
+      entry.rank = index + 1;
+    });
+
+    cache.set("leaderboard", leaderboard);
+    console.log("Leaderboard cache updated at", new Date().toISOString());
   } catch (error) {
-    console.error('Error fetching leaderboard:', error);
+    console.error("Error fetching leaderboard:", error);
   }
 };
+
 
 export const getLeaderboard = async (req: Request, res: Response) => {
   try {

@@ -8,7 +8,6 @@ export const getDetails = async (req: Request, res: Response) => {
     if (!teamId) {
         return res.status(400).json({ error: "teamId is missing" });
     }
-
     try {
         const team = await prisma.team.findUnique({
             where: { id: teamId },
@@ -83,6 +82,7 @@ export const getAllTeams = async (req: Request, res: Response) => {
 
         const formattedTeams = teams.map((team: any) => ({
             teamId: team.id,
+            scc_id : team.scc_id ,
             scc_id : team.scc_id ,
             title: team.title,
             members: team.team_members,

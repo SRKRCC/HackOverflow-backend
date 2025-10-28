@@ -63,10 +63,6 @@ export const getTasks = async (req: Request, res: Response) => {
   }
 };
 
-
-
-
-
 // Get one task
 export const getTaskById = async (req: Request, res: Response) => {
   try {
