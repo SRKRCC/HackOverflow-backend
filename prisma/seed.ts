@@ -20,6 +20,7 @@ async function seed() {
       description: "Build an AI system to detect crop diseases from images.",
       category: "Agriculture",
       tags: ["AI", "Machine Learning", "Agriculture"],
+      isCustom: false,
     },
   });
 
@@ -30,6 +31,7 @@ async function seed() {
       description: "IoT-based system for tracking and managing waste bins.",
       category: "Environment",
       tags: ["IoT", "Environment", "Sustainability"],
+      isCustom: false,
     },
   });
 
@@ -40,6 +42,7 @@ async function seed() {
       description: "Develop a system to optimize electricity usage in smart homes.",
       category: "Energy",
       tags: ["Smart Home", "Energy", "IoT"],
+      isCustom: false,
     },
   });
 
@@ -50,6 +53,7 @@ async function seed() {
       description: "An AI-powered tutor to help students with personalized learning.",
       category: "Education",
       tags: ["AI", "Education", "Personalization"],
+      isCustom: false,
     },
   });
 
@@ -60,6 +64,7 @@ async function seed() {
       description: "Develop an ML-based flood prediction and alerting system.",
       category: "Disaster Management",
       tags: ["Machine Learning", "Disaster Management", "Environment"],
+      isCustom: false,
     },
   });
 
@@ -69,7 +74,7 @@ async function seed() {
       scc_password: await generatePasswordHash("pass123"),
       title: "Green Farmers",
       ps_id: ps1.id,
-      gallery_images: ["https://example.com/img1.png"],
+      gallery_images: ["https://hackoverflow.srkrcodingclub.in/HS1.webp"],
     },
   });
 
@@ -79,8 +84,7 @@ async function seed() {
       scc_password: await generatePasswordHash("pass456"),
       title: "Eco Warriors",
       ps_id: ps2.id,
-      gallery_images: ["https://example.com/img2.png"],
-      
+      gallery_images: ["https://hackoverflow.srkrcodingclub.in/HS1.webp"],
     },
   });
 
@@ -90,7 +94,7 @@ async function seed() {
       scc_password: await generatePasswordHash("pass789"),
       title: "Power Savers",
       ps_id: ps3.id,
-      gallery_images: ["https://example.com/img3.png"],
+      gallery_images: ["https://hackoverflow.srkrcodingclub.in/HS1.webp"],
     },
   });
 
@@ -100,7 +104,7 @@ async function seed() {
       scc_password: await generatePasswordHash("pass321"),
       title: "AI Gurus",
       ps_id: ps4.id,
-      gallery_images: ["https://example.com/img4.png"],
+      gallery_images: ["https://hackoverflow.srkrcodingclub.in/HS1.webp"],
     },
   });
 
@@ -110,7 +114,7 @@ async function seed() {
       scc_password: await generatePasswordHash("pass654"),
       title: "Flood Fighters",
       ps_id: ps5.id,
-      gallery_images: ["https://example.com/img5.png"],
+      gallery_images: ["https://hackoverflow.srkrcodingclub.in/HS1.webp"],
     },
   });
 
@@ -125,34 +129,34 @@ async function seed() {
 
   await prisma.member.createMany({
     data: [
-      { name: "Alice Johnson", email: "alice@example.com", phone_number: "9876543210", department: "CSE", college_name: "ABC University", year_of_study: 3, location: "Hyderabad", attendance: 10, teamId: team1.id },
-      { name: "Bob Kumar", email: "bob@example.com", phone_number: "9123456789", department: "IT", college_name: "XYZ College", year_of_study: 2, location: "Vijayawada", attendance: 8, teamId: team1.id },
-      { name: "Catherine Rao", email: "cathy@example.com", phone_number: "9991112222", department: "ECE", college_name: "LMN Institute", year_of_study: 4, location: "Vizag", attendance: 12, teamId: team1.id },
-      { name: "David Paul", email: "david@example.com", phone_number: "8887776666", department: "EEE", college_name: "ABC University", year_of_study: 1, location: "Hyderabad", attendance: 5, teamId: team1.id },
-      { name: "Eva Sharma", email: "eva@example.com", phone_number: "7778889999", department: "MECH", college_name: "XYZ College", year_of_study: 2, location: "Warangal", attendance: 7, teamId: team1.id },
+      { name: "Alice Johnson", email: "alice@example.com", phone_number: "9876543210", department: "CSE", college_name: "ABC University", year_of_study: 3, location: "Hyderabad", attendance: 10, tShirtSize: "M", teamId: team1.id },
+      { name: "Bob Kumar", email: "bob@example.com", phone_number: "9123456789", department: "IT", college_name: "XYZ College", year_of_study: 2, location: "Vijayawada", attendance: 8, tShirtSize: "L", teamId: team1.id },
+      { name: "Catherine Rao", email: "cathy@example.com", phone_number: "9991112222", department: "ECE", college_name: "LMN Institute", year_of_study: 4, location: "Vizag", attendance: 12, tShirtSize: "S", teamId: team1.id },
+      { name: "David Paul", email: "david@example.com", phone_number: "8887776666", department: "EEE", college_name: "ABC University", year_of_study: 1, location: "Hyderabad", attendance: 5, tShirtSize: "M", teamId: team1.id },
+      { name: "Eva Sharma", email: "eva@example.com", phone_number: "7778889999", department: "MECH", college_name: "XYZ College", year_of_study: 2, location: "Warangal", attendance: 7, tShirtSize: "L", teamId: team1.id },
 
-      { name: "Farhan Ali", email: "farhan@example.com", phone_number: "6665554444", department: "CSE", college_name: "ABC University", year_of_study: 3, location: "Hyderabad", attendance: 9, teamId: team2.id },
-      { name: "Grace Lee", email: "grace@example.com", phone_number: "5554443333", department: "IT", college_name: "XYZ College", year_of_study: 2, location: "Vijayawada", attendance: 11, teamId: team2.id },
-      { name: "Hari Krishna", email: "hari@example.com", phone_number: "4443332222", department: "ECE", college_name: "LMN Institute", year_of_study: 4, location: "Vizag", attendance: 6, teamId: team2.id },
-      { name: "Isabel Dsouza", email: "isabel@example.com", phone_number: "3332221111", department: "EEE", college_name: "ABC University", year_of_study: 1, location: "Hyderabad", attendance: 10, teamId: team2.id },
+      { name: "Farhan Ali", email: "farhan@example.com", phone_number: "6665554444", department: "CSE", college_name: "ABC University", year_of_study: 3, location: "Hyderabad", attendance: 9, tShirtSize: "M", teamId: team2.id },
+      { name: "Grace Lee", email: "grace@example.com", phone_number: "5554443333", department: "IT", college_name: "XYZ College", year_of_study: 2, location: "Vijayawada", attendance: 11, tShirtSize: "L", teamId: team2.id },
+      { name: "Hari Krishna", email: "hari@example.com", phone_number: "4443332222", department: "ECE", college_name: "LMN Institute", year_of_study: 4, location: "Vizag", attendance: 6, tShirtSize: "S", teamId: team2.id },
+      { name: "Isabel Dsouza", email: "isabel@example.com", phone_number: "3332221111", department: "EEE", college_name: "ABC University", year_of_study: 1, location: "Hyderabad", attendance: 10, tShirtSize: "M", teamId: team2.id },
 
-      { name: "Jack Wilson", email: "jack@example.com", phone_number: "2221110000", department: "CSE", college_name: "ABC University", year_of_study: 3, location: "Hyderabad", attendance: 8, teamId: team3.id },
-      { name: "Kavya Nair", email: "kavya@example.com", phone_number: "1110009999", department: "IT", college_name: "XYZ College", year_of_study: 2, location: "Vijayawada", attendance: 7, teamId: team3.id },
-      { name: "Leo Thomas", email: "leo@example.com", phone_number: "9998887777", department: "ECE", college_name: "LMN Institute", year_of_study: 4, location: "Vizag", attendance: 13, teamId: team3.id },
-      { name: "Mira Patel", email: "mira@example.com", phone_number: "8887776665", department: "EEE", college_name: "ABC University", year_of_study: 1, location: "Hyderabad", attendance: 6, teamId: team3.id },
-      { name: "Nikhil Verma", email: "nikhil@example.com", phone_number: "7776665555", department: "CSE", college_name: "XYZ College", year_of_study: 2, location: "Warangal", attendance: 10, teamId: team3.id },
-      { name: "Olivia Fernandez", email: "olivia@example.com", phone_number: "6665554443", department: "MECH", college_name: "LMN Institute", year_of_study: 3, location: "Vizag", attendance: 9, teamId: team3.id },
+      { name: "Jack Wilson", email: "jack@example.com", phone_number: "2221110000", department: "CSE", college_name: "ABC University", year_of_study: 3, location: "Hyderabad", attendance: 8, tShirtSize: "L", teamId: team3.id },
+      { name: "Kavya Nair", email: "kavya@example.com", phone_number: "1110009999", department: "IT", college_name: "XYZ College", year_of_study: 2, location: "Vijayawada", attendance: 7, tShirtSize: "M", teamId: team3.id },
+      { name: "Leo Thomas", email: "leo@example.com", phone_number: "9998887777", department: "ECE", college_name: "LMN Institute", year_of_study: 4, location: "Vizag", attendance: 13, tShirtSize: "L", teamId: team3.id },
+      { name: "Mira Patel", email: "mira@example.com", phone_number: "8887776665", department: "EEE", college_name: "ABC University", year_of_study: 1, location: "Hyderabad", attendance: 6, tShirtSize: "S", teamId: team3.id },
+      { name: "Nikhil Verma", email: "nikhil@example.com", phone_number: "7776665555", department: "CSE", college_name: "XYZ College", year_of_study: 2, location: "Warangal", attendance: 10, tShirtSize: "M", teamId: team3.id },
+      { name: "Olivia Fernandez", email: "olivia@example.com", phone_number: "6665554443", department: "MECH", college_name: "LMN Institute", year_of_study: 3, location: "Vizag", attendance: 9, tShirtSize: "L", teamId: team3.id },
 
-      { name: "Pranav Gupta", email: "pranav@example.com", phone_number: "5554443332", department: "CSE", college_name: "ABC University", year_of_study: 3, location: "Hyderabad", attendance: 12, teamId: team4.id },
-      { name: "Qadir Hussain", email: "qadir@example.com", phone_number: "4443332221", department: "IT", college_name: "XYZ College", year_of_study: 2, location: "Vijayawada", attendance: 5, teamId: team4.id },
-      { name: "Ritika Sharma", email: "ritika@example.com", phone_number: "3332221110", department: "ECE", college_name: "LMN Institute", year_of_study: 4, location: "Vizag", attendance: 11, teamId: team4.id },
-      { name: "Suresh Kumar", email: "suresh@example.com", phone_number: "2221110009", department: "EEE", college_name: "ABC University", year_of_study: 1, location: "Hyderabad", attendance: 8, teamId: team4.id },
+      { name: "Pranav Gupta", email: "pranav@example.com", phone_number: "5554443332", department: "CSE", college_name: "ABC University", year_of_study: 3, location: "Hyderabad", attendance: 12, tShirtSize: "M", teamId: team4.id },
+      { name: "Qadir Hussain", email: "qadir@example.com", phone_number: "4443332221", department: "IT", college_name: "XYZ College", year_of_study: 2, location: "Vijayawada", attendance: 5, tShirtSize: "L", teamId: team4.id },
+      { name: "Ritika Sharma", email: "ritika@example.com", phone_number: "3332221110", department: "ECE", college_name: "LMN Institute", year_of_study: 4, location: "Vizag", attendance: 11, tShirtSize: "S", teamId: team4.id },
+      { name: "Suresh Kumar", email: "suresh@example.com", phone_number: "2221110009", department: "EEE", college_name: "ABC University", year_of_study: 1, location: "Hyderabad", attendance: 8, tShirtSize: "M", teamId: team4.id },
 
-      { name: "Tanvi Rao", email: "tanvi@example.com", phone_number: "1110009998", department: "CSE", college_name: "ABC University", year_of_study: 3, location: "Hyderabad", attendance: 9, teamId: team5.id },
-      { name: "Uday Kiran", email: "uday@example.com", phone_number: "9998887776", department: "IT", college_name: "XYZ College", year_of_study: 2, location: "Vijayawada", attendance: 6, teamId: team5.id },
-      { name: "Varsha Menon", email: "varsha@example.com", phone_number: "8887776664", department: "ECE", college_name: "LMN Institute", year_of_study: 4, location: "Vizag", attendance: 12, teamId: team5.id },
-      { name: "Waseem Akhtar", email: "waseem@example.com", phone_number: "7776665554", department: "EEE", college_name: "ABC University", year_of_study: 1, location: "Hyderabad", attendance: 7, teamId: team5.id },
-      { name: "Yamini Reddy", email: "yamini@example.com", phone_number: "6665554442", department: "MECH", college_name: "XYZ College", year_of_study: 2, location: "Warangal", attendance: 10, teamId: team5.id },
+      { name: "Tanvi Rao", email: "tanvi@example.com", phone_number: "1110009998", department: "CSE", college_name: "ABC University", year_of_study: 3, location: "Hyderabad", attendance: 9, tShirtSize: "L", teamId: team5.id },
+      { name: "Uday Kiran", email: "uday@example.com", phone_number: "9998887776", department: "IT", college_name: "XYZ College", year_of_study: 2, location: "Vijayawada", attendance: 6, tShirtSize: "M", teamId: team5.id },
+      { name: "Varsha Menon", email: "varsha@example.com", phone_number: "8887776664", department: "ECE", college_name: "LMN Institute", year_of_study: 4, location: "Vizag", attendance: 12, tShirtSize: "L", teamId: team5.id },
+      { name: "Waseem Akhtar", email: "waseem@example.com", phone_number: "7776665554", department: "EEE", college_name: "ABC University", year_of_study: 1, location: "Hyderabad", attendance: 7, tShirtSize: "M", teamId: team5.id },
+      { name: "Yamini Reddy", email: "yamini@example.com", phone_number: "6665554442", department: "MECH", college_name: "XYZ College", year_of_study: 2, location: "Warangal", attendance: 10, tShirtSize: "L", teamId: team5.id },
     ],
   });
 

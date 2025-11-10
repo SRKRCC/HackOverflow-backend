@@ -66,3 +66,18 @@ export const getImages = async (req: Request, res: Response) => {
         res.status(500).json({ error: "Internal server error" });
     }
 }
+
+export const getAnnouncements = async (req: Request, res: Response) => {
+    try {
+        const announcements = await prisma.announcement.findMany();
+
+        res.status(200).json({
+            success: true,
+            data: announcements,
+            message: "Announcements retrieved successfully"
+        });
+    } catch (error) {
+        console.error("Error fetching Announcements:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}

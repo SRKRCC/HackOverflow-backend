@@ -19,6 +19,7 @@ model Member {
   year_of_study Int?
   location      String?
   attendance    Int     @default(0)
+  tShirtSize    String?
 
   // Relation
   teamId Int?
@@ -46,6 +47,7 @@ model ProblemStatement {
   description String
   category    String
   tags        String[]
+  isCustom   Boolean @default(false)
 
   Team Team[]
 }
