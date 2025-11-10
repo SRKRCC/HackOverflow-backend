@@ -11,7 +11,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors({
-  origin: "https://hackoverflow.srkrcodingclub.in",
+  origin: ["https://hackoverflow.srkrcodingclub.in", "http://localhost:5173"],
   credentials: true,                          
 }));
 
