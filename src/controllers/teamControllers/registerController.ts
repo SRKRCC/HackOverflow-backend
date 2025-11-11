@@ -16,7 +16,7 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
     const files = req.files as MulterFiles;
 
     // Validate input
-    const validation = await validateRegistrationData(registrationData, files);
+    const validation = await validateRegistrationData(registrationData);
     if (!validation.isValid) {
       res.status(400).json({
         success: false,
@@ -83,14 +83,16 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
 
       // Upload payment screenshot
       let paymentScreenshotUrl = '';
-      if (files['payment.screenshot'] && files['payment.screenshot'][0]) {
-        const uploadResult = await uploadImageToCloudinary(
-          files['payment.screenshot'][0].buffer,
-          'payment-screenshots'
-        );
-        paymentScreenshotUrl = uploadResult.secure_url;
+      if (files && files['paymentScreenshot'] && files['paymentScreenshot'][0]) {
+        try {
+          const uploadResult = await uploadImageToCloudinary(files['paymentScreenshot'][0].buffer, 'payments');
+          paymentScreenshotUrl = uploadResult.secure_url;
+        } catch (uploadError) {
+          console.error('Payment screenshot upload error:', uploadError);
+          // Continue without throwing error - payment verification can be done manually
+        }
       }
-
+      
       // Generate SCC credentials
       const sccId = await generateSccId(tx);
       const sccPassword = generateSccPassword();
@@ -109,17 +111,17 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
       // Upload member photos and create member records
       const memberPromises = [];
 
-      // Handle team lead
+      // Handle team lead photo upload
       let leadPhotoUrl = '';
-      if (files['lead.photo'] && files['lead.photo'][0]) {
-        const uploadResult = await uploadImageToCloudinary(
-          files['lead.photo'][0].buffer,
-          `team-${team.id}/members`
-        );
-        leadPhotoUrl = uploadResult.secure_url;
-      }
-
-      memberPromises.push(
+      if (files && files['leadPhoto'] && files['leadPhoto'][0]) {
+        try {
+          const uploadResult = await uploadImageToCloudinary(files['leadPhoto'][0].buffer, 'member-photos');
+          leadPhotoUrl = uploadResult.secure_url;
+        } catch (uploadError) {
+          console.error('Lead photo upload error:', uploadError);
+          // Continue without throwing error - photo upload is optional
+        }
+      }      memberPromises.push(
         tx.member.create({
           data: {
             name: registrationData.lead.name,
@@ -143,14 +145,17 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
         if (!member) continue; // Skip if member is undefined
         
         let memberPhotoUrl = '';
-        
-        const photoKey = `members[${i}].photo` as keyof MulterFiles;
-        if (files[photoKey] && files[photoKey]![0]) {
-          const uploadResult = await uploadImageToCloudinary(
-            files[photoKey]![0].buffer,
-            `team-${team.id}/members`
-          );
-          memberPhotoUrl = uploadResult.secure_url;
+        // Handle member photo upload
+        const memberPhotoKey = `memberPhoto_${i}`;
+        if (files && files[memberPhotoKey] && files[memberPhotoKey][0]) {
+          try {
+            const memberPhotoFile = files[memberPhotoKey][0];
+            const uploadResult = await uploadImageToCloudinary(memberPhotoFile.buffer, 'member-photos');
+            memberPhotoUrl = uploadResult.secure_url;
+          } catch (uploadError) {
+            console.error(`Member ${i} photo upload error:`, uploadError);
+            // Continue without throwing error - photo upload is optional
+          }
         }
 
         memberPromises.push(
@@ -199,8 +204,7 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
 };
 
 const validateRegistrationData = async (
-  data: TeamRegistrationRequest,
-  files: MulterFiles
+  data: TeamRegistrationRequest
 ): Promise<{ isValid: boolean; errors: ValidationError[] }> => {
   const errors: ValidationError[] = [];
 
@@ -249,22 +253,7 @@ const validateRegistrationData = async (
     if (!data.payment.transactionId || !data.payment.upiReferenceId) {
       errors.push({ field: 'payment', message: 'Transaction ID and UPI reference ID are required' });
     }
-    if (!files['payment.screenshot'] || files['payment.screenshot'].length === 0) {
-      errors.push({ field: 'payment.screenshot', message: 'Payment screenshot is required' });
-    }
   }
-
-  // Validate required files
-  if (!files['lead.photo'] || files['lead.photo'].length === 0) {
-    errors.push({ field: 'lead.photo', message: 'Team lead photo is required' });
-  }
-
-  data.members?.forEach((_, index) => {
-    const photoKey = `members[${index}].photo` as keyof MulterFiles;
-    if (!files[photoKey] || files[photoKey]!.length === 0) {
-      errors.push({ field: `members[${index}].photo`, message: `Member ${index + 1} photo is required` });
-    }
-  });
 
   return {
     isValid: errors.length === 0,
@@ -274,7 +263,8 @@ const validateRegistrationData = async (
 
 const validateMemberData = (member: any, prefix: string, errors: ValidationError[]): void => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const phoneRegex = /^\+91\s?\d{10}$/;
+  // More flexible phone regex to accept various formats
+  const phoneRegex = /^(\+91[-\s]?)?[6-9]\d{9}$/;
 
   if (!member.name || member.name.trim().length < 2) {
     errors.push({ field: `${prefix}.name`, message: 'Name must be at least 2 characters long' });
@@ -285,7 +275,7 @@ const validateMemberData = (member: any, prefix: string, errors: ValidationError
   }
 
   if (!member.phone || !phoneRegex.test(member.phone)) {
-    errors.push({ field: `${prefix}.phone`, message: 'Valid Indian phone number is required (+91 followed by 10 digits)' });
+    errors.push({ field: `${prefix}.phone`, message: 'Valid phone number is required (10 digits starting with 6-9, optionally with +91)' });
   }
 
   if (!member.collegeName || member.collegeName.trim().length < 3) {
