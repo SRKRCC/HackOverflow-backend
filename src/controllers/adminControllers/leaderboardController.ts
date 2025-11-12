@@ -9,6 +9,7 @@ interface LeaderboardEntry {
   id: number;
   title: string;
   totalPoints: number;
+  completedTasks: number;
   rank : number
 }
 
