@@ -14,7 +14,7 @@ const statementSelect = {
   tags: true,
 };
 
-const createProblemStatement = async (row: any) => {
+export const createProblemStatement = async (row: any) => {
   const lastStatement = await prisma.problemStatement.findFirst({
     orderBy: { id: "desc" },
   });
@@ -39,6 +39,40 @@ const createProblemStatement = async (row: any) => {
           : row.tags,
     },
   });
+};
+
+// Create single problem statement
+export const createSingleStatement = async (req: Request, res: Response) => {
+  try {
+    const { title, description, category, tags } = req.body;
+
+    if (!title || !description || !category || !tags) {
+      return res.status(400).json({ 
+        error: "Title, description, category, and tags are required" 
+      });
+    }
+
+    const statement = await createProblemStatement({
+      title,
+      description,
+      category,
+      tags: Array.isArray(tags) ? tags : tags.split(",").map((tag: string) => tag.trim())
+    });
+
+    res.status(201).json({ 
+      message: "Problem statement created successfully", 
+      data: {
+        psId: statement.psId,
+        title: statement.title,
+        description: statement.description,
+        category: statement.category,
+        tags: statement.tags,
+      }
+    });
+  } catch (error: any) {
+    console.error("Error creating problem statement:", error);
+    res.status(500).json({ error: error.message });
+  }
 };
 
 export const uploadCsv = async (req: Request, res: Response) => {

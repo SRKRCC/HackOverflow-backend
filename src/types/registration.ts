@@ -24,9 +24,6 @@ export interface PaymentData {
   totalMembers: number;
   amountPerHead: number;
   totalAmount: number;
-  screenshot: any; // File object/path
-  upiReferenceId: string;
-  transactionId: string;
 }
 
 export interface TeamRegistrationRequest {
