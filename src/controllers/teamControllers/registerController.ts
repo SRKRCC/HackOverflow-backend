@@ -249,10 +249,6 @@ const validateRegistrationData = async (
   // Validate payment data
   if (!data.payment) {
     errors.push({ field: 'payment', message: 'Payment information is required' });
-  } else {
-    if (!data.payment.transactionId || !data.payment.upiReferenceId) {
-      errors.push({ field: 'payment', message: 'Transaction ID and UPI reference ID are required' });
-    }
   }
 
   return {

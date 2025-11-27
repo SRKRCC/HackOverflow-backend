@@ -4,6 +4,9 @@ import {
   uploadCsv,
   deleteStatement,
   updateStatement,
+  createSingleStatement,
+  getStatements,
+  getStatementById,
 } from "../../controllers/adminControllers/psControllers.js";
 import { authenticateAdmin } from "../../middlewares/authenticateAdmin.js";
 
@@ -25,6 +28,9 @@ const upload = multer({
 const router = Router();
 router.use(authenticateAdmin);
 // Admin routes
+router.post("/", createSingleStatement);
+router.get("/", getStatements);
+router.get("/:id", getStatementById);
 router.post("/csv", upload.single("csv-file"), uploadCsv);
 router.put("/:id", updateStatement);
 router.delete("/:id", deleteStatement);
