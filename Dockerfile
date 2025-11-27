@@ -13,7 +13,7 @@ COPY prisma ./prisma
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 # Generate Prisma client
-RUN npx prisma generate
+RUN ./node_modules/.bin/prisma generate
 
 # Copy compiled code
 COPY dist ./dist
