@@ -8,6 +8,11 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 # Copy Prisma files and generate client for production
 COPY prisma ./prisma
+
+# Install OpenSSL (required for Prisma binary)
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
+# Generate Prisma client
 RUN npx prisma generate
 
 # Copy compiled code
