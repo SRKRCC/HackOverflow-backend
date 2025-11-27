@@ -8,7 +8,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 # Copy Prisma files and generate client for production
 COPY prisma ./prisma
-RUN npx prisma generate --no-engine
+RUN npx prisma generate
 
 # Copy compiled code
 COPY dist ./dist
