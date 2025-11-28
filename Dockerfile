@@ -1,24 +1,17 @@
 # Build stage: Amazon Linux 2023 (same family as Lambda public image) to generate Prisma client
-FROM amazonlinux:2023 AS build
+FROM node:20-bullseye-slim AS build
 WORKDIR /app
-
-# Install DNF tools, OpenSSL and Node.js 20
-RUN microdnf update -y && \
-    microdnf install -y openssl openssl-devel curl tar gzip && \
-    curl -fsSL https://rpm.nodesource.com/setup_20.x | bash - && \
-    microdnf install -y nodejs && microdnf clean all
 
 # Copy package files and install dependencies
 COPY package*.json ./
 RUN npm ci && npm cache clean --force
 
 # Copy source and configuration
-COPY tsconfig.json ./
-COPY src ./src
+COPY dist ./dist
 COPY prisma ./prisma
 
-# Build TypeScript and generate Prisma client with correct binary for Amazon Linux 2023
-RUN npx tsc && npx prisma generate
+# Generate Prisma client (build stage will download engines for configured binaryTargets)
+RUN npx prisma generate
 
 # Production stage - same base image
 # Runtime stage: Lambda official Node 20 image
