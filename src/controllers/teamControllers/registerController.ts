@@ -105,7 +105,8 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
           scc_password: sccPassword,
           title: registrationData.teamName,
           ps_id: problemStatement.id,
-          gallery_images: [] // Initialize empty gallery
+          gallery_images: [], // Initialize empty gallery
+          paymentVerified: false // Default to unverified, admin will verify manually
         }
       });
 

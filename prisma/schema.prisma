@@ -1,6 +1,7 @@
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "rhel-openssl-1.0.x"]
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -31,8 +32,9 @@ model Team {
   scc_password        String?
   title               String
   problem_statement   ProblemStatement @relation(fields: [ps_id], references: [id])
-  ps_id Int
+  ps_id               Int
   gallery_images      String[] // Store multiple image URLs
+  paymentVerified     Boolean  @default(false) // Admin verification status
 
   // Relations
   team_members Member[]

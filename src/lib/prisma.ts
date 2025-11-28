@@ -1,8 +1,11 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '../generated/prisma/index.js';
 
-// Prisma 7 uses prisma.config.ts for database URL
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient();
+export const prisma: PrismaClient = globalForPrisma.prisma ?? new PrismaClient();
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+}

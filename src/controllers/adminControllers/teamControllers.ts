@@ -84,11 +84,45 @@ export const getAllTeams = async (req: Request, res: Response) => {
             scc_id : team.scc_id ,
             title: team.title,
             members: team.team_members,
+            paymentVerified: team.paymentVerified,
         }));
 
         res.json(formattedTeams);
     } catch (error) {
         console.error("Error fetching teams:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+// Verify team payment
+export const verifyPayment = async (req: Request, res: Response) => {
+    try {
+        const { teamId } = req.params;
+        const { verified } = req.body;
+
+        if (!teamId) {
+            return res.status(400).json({ error: "Team ID is required" });
+        }
+
+        if (typeof verified !== 'boolean') {
+            return res.status(400).json({ error: "verified must be a boolean value" });
+        }
+
+        const team = await prisma.team.update({
+            where: { id: Number(teamId) },
+            data: {
+                paymentVerified: verified,
+            },
+        });
+
+        res.json({
+            success: true,
+            message: `Payment ${verified ? 'verified' : 'unverified'} for team "${team.title}"`,
+            teamId: team.id,
+            paymentVerified: team.paymentVerified,
+        });
+    } catch (error) {
+        console.error("Error verifying payment:", error);
         res.status(500).json({ error: "Internal server error" });
     }
 };
