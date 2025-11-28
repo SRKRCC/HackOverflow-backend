@@ -1,0 +1,43 @@
+services:
+  ho-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:8080"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      # Lambda runtime interface emulator
+      - AWS_LAMBDA_RUNTIME_API=127.0.0.1:9001
+    volumes:
+      - .env:/var/task/.env:ro
+    command: ["dist/app.handler"]
+    networks:
+      - ho-network
+
+  # PostgreSQL database for testing
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: hackoverflow
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ho-network
+
+volumes:
+  postgres_data:
+
+networks:
+  ho-network:
+    driver: bridge

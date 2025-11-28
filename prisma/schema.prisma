@@ -1,6 +1,7 @@
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["native", "rhel-openssl-1.0.x"]
+  // Amazon Linux 2023 (Lambda Node.js 20) uses OpenSSL 3.x — target rhel-openssl-3.0.x
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
   output        = "../src/generated/prisma"
 }
 
