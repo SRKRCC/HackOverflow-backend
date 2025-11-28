@@ -1,7 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "../lib/prisma.js";
 
 export const validateTeamId = async (req: Request, res: Response, next: NextFunction) => {
   const { teamId } = req.params;

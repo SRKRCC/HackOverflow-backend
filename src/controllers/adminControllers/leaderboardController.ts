@@ -1,8 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../../lib/prisma.js";
 import type { Request, Response } from 'express';
 import NodeCache from 'node-cache';
 
-const prisma = new PrismaClient();
 const cache = new NodeCache({ stdTTL: 300 }); // 5 minutes TTL
 
 interface LeaderboardEntry {

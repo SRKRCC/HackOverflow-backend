@@ -1,33 +1,37 @@
-# Stage 1 — Build dependencies and Prisma
-FROM node:20-slim AS build
-WORKDIR /app
+# Lambda base image
+FROM public.ecr.aws/lambda/nodejs:20 AS build
+WORKDIR /var/task
 
-# Install dependencies
+# Install OpenSSL 1.0 (required for Prisma on Amazon Linux 2)
+RUN yum install -y openssl openssl-devel && yum clean all
+
+# Copy package files
 COPY package*.json ./
-RUN npm ci --omit=dev && npm cache clean --force
 
-# Copy Prisma files and generate client for production
+# Install all dependencies
+RUN npm ci && npm cache clean --force
+
+# Copy Prisma schema and config
 COPY prisma ./prisma
 
-# Install OpenSSL (required for Prisma binary)
-RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+# Generate Prisma client with correct binary for Lambda
+RUN npx prisma generate
 
-# Generate Prisma client
-RUN ./node_modules/.bin/prisma generate
-
-# Copy compiled code
+# Copy TypeScript compiled code
 COPY dist ./dist
 
-# Stage 2 — Smaller runtime image
+# Production stage - same base image
 FROM public.ecr.aws/lambda/nodejs:20 AS runtime
 WORKDIR /var/task
 
-# Copy only necessary runtime files
-COPY --from=build /app/package*.json ./
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/prisma ./prisma
-COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
+# Install OpenSSL runtime
+RUN yum install -y openssl && yum clean all
+
+# Copy only production dependencies and generated files
+COPY --from=build /var/task/package*.json ./
+COPY --from=build /var/task/dist ./dist
+COPY --from=build /var/task/node_modules ./node_modules
+COPY --from=build /var/task/prisma ./prisma
 
 # Set Lambda handler
 CMD ["dist/app.handler"]

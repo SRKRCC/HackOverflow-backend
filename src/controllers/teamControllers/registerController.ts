@@ -1,10 +1,9 @@
 import type { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../lib/prisma.js';
 import { uploadImageToCloudinary } from '../../utils/cloudinary.js';
 import type { TeamRegistrationRequest, RegistrationResponse, ValidationError } from '../../types/registration.js';
 import crypto from 'crypto';
-
-const prisma = new PrismaClient();
+import type { PrismaClient } from '@prisma/client';
 
 interface MulterFiles {
   [fieldname: string]: Express.Multer.File[];
@@ -28,8 +27,10 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
 
     // Use Prisma transaction for data consistency
     const result = await prisma.$transaction(async (tx) => {
+      const txClient = tx as unknown as PrismaClient;
+      
       // Check for duplicate team name
-      const existingTeam = await tx.team.findFirst({
+      const existingTeam = await txClient.team.findFirst({
         where: { title: registrationData.teamName }
       });
 
@@ -43,12 +44,12 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
         ...registrationData.members.map(m => m.email)
       ];
       
-      const existingMembers = await tx.member.findMany({
+      const existingMembers = await txClient.member.findMany({
         where: { email: { in: memberEmails } }
       });
 
       if (existingMembers.length > 0) {
-        throw new Error(`Email(s) already registered: ${existingMembers.map(m => m.email).join(', ')}`);
+        throw new Error(`Email(s) already registered: ${existingMembers.map((m: any) => m.email).join(', ')}`);
       }
 
       // Handle problem statement
@@ -56,7 +57,7 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
       if (registrationData.problemStatement.isCustom) {
         // Create custom problem statement
         const customPsId = `CUSTOM_${crypto.randomBytes(8).toString('hex').toUpperCase()}`;
-        problemStatement = await tx.problemStatement.create({
+        problemStatement = await txClient.problemStatement.create({
           data: {
             psId: customPsId,
             title: registrationData.problemStatement.title,
@@ -72,7 +73,7 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
           throw new Error('Problem statement ID is required for non-custom problems');
         }
         
-        problemStatement = await tx.problemStatement.findFirst({
+        problemStatement = await txClient.problemStatement.findFirst({
           where: { psId: registrationData.problemStatement.psId }
         });
 
@@ -94,11 +95,11 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
       }
       
       // Generate SCC credentials
-      const sccId = await generateSccId(tx);
+      const sccId = await generateSccId(txClient);
       const sccPassword = generateSccPassword();
 
       // Create team
-      const team = await tx.team.create({
+      const team = await txClient.team.create({
         data: {
           scc_id: sccId,
           scc_password: sccPassword,
@@ -122,7 +123,7 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
           // Continue without throwing error - photo upload is optional
         }
       }      memberPromises.push(
-        tx.member.create({
+        txClient.member.create({
           data: {
             name: registrationData.lead.name,
             email: registrationData.lead.email,
@@ -159,7 +160,7 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
         }
 
         memberPromises.push(
-          tx.member.create({
+          txClient.member.create({
             data: {
               name: member.name,
               email: member.email,
@@ -297,9 +298,10 @@ const validateMemberData = (member: any, prefix: string, errors: ValidationError
 
 const generateSccId = async (tx: any): Promise<string> => {
   const prefix = 'SCC';
+  const txClient = tx as unknown as PrismaClient;
   
   // Get the last team's SCC ID to generate incremental ID
-  const lastTeam = await tx.team.findFirst({
+  const lastTeam = await txClient.team.findFirst({
     where: {
       scc_id: {
         startsWith: prefix

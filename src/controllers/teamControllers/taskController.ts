@@ -1,8 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../../lib/prisma.js";
 import { error } from "console";
 import type { Request, Response } from "express";
-
-const prisma = new PrismaClient();
 
 // Get tasks assigned to a specific team
 export const getTeamTasks = async (req: Request, res: Response) => {

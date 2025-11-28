@@ -1,9 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../../lib/prisma.js";
 import type { Request, Response } from "express";
 import fs from "fs";
 import csv from "csv-parser";
-
-const prisma = new PrismaClient();
 
 const statementSelect = {
   id: false, // exclude id

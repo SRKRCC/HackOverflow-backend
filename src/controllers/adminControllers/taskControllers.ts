@@ -1,7 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../../lib/prisma.js";
 import type { Request, Response } from "express";
-
-const prisma = new PrismaClient();
 
 // Create Task (Admin assigns task to team)
 export const createTask = async (req: Request, res: Response) => {

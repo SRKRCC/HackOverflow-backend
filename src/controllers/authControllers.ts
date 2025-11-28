@@ -1,11 +1,9 @@
 import dotenv from "dotenv";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../lib/prisma.js";
 import type { Request, Response } from "express";
 import { verifyPasswordHash, generateToken, generatePasswordHash } from "../utils/jwtService.js";
 
 dotenv.config();
-
-const prisma = new PrismaClient();
 
 export const login = async (req: Request, res: Response) => {
   const { role, username, password } = req.body;

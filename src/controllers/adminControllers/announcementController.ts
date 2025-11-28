@@ -1,9 +1,7 @@
 
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../../lib/prisma.js";
 import type { Request, Response } from 'express';
 
-
-const prisma = new PrismaClient();
 
 // Get all announcements
 export const getAnnouncements = async (req: Request, res: Response) => {
