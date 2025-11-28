@@ -128,9 +128,15 @@ export const uploadCsv = async (req: Request, res: Response) => {
 // Get all Statements
 export const getStatements = async (req: Request, res: Response) => {
   try {
-    const statements = await prisma.problemStatement.findMany({
-      select: statementSelect,
-    });
+    const isAdmin = (req as any).user?.role === "admin";
+
+    const query: any = { select: statementSelect };
+    if (!isAdmin) {
+      query.where = { isCustom: false };
+    }
+
+    const statements = await prisma.problemStatement.findMany(query);
+
     res.json({ message: "Problem Statements fetched successfully", data: statements });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

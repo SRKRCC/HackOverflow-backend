@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../../lib/prisma.js';
 import { uploadImageToCloudinary } from '../../utils/cloudinary.js';
+import { sendRegistrationEmail } from '../../utils/email.js';
 import type { TeamRegistrationRequest, RegistrationResponse, ValidationError } from '../../types/registration.js';
 import crypto from 'crypto';
 import type { PrismaClient } from '@prisma/client';
@@ -184,8 +185,36 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
       return {
         teamId: team.id,
         sccId: sccId,
-        sccPassword: sccPassword
+        sccPassword: sccPassword,
+        team: team,
+        problemStatement: problemStatement,
+        allMembers: [registrationData.lead, ...registrationData.members]
       };
+    });
+
+
+    void sendRegistrationEmail(
+      {
+        id: result.teamId,
+        title: registrationData.teamName,
+        scc_id: result.sccId,
+        scc_password: result.sccPassword
+      },
+      [
+        {
+          name: registrationData.lead.name,
+          email: registrationData.lead.email,
+          phone_number: registrationData.lead.phone
+        },
+        ...registrationData.members.map(member => ({
+          name: member.name,
+          email: member.email,
+          phone_number: member.phone
+        }))
+      ],
+      result.problemStatement
+    ).catch((emailError) => {
+      console.error('Failed to send registration email:', emailError);
     });
 
     res.status(201).json({

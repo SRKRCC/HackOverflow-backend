@@ -26,7 +26,7 @@ jobs:
 
       - name: Generate Prisma Client
         run: npx prisma generate
-        
+
       - name: Run TypeScript compilation
         run: npx tsc --noEmit
 
@@ -89,7 +89,10 @@ jobs:
               FrontendURL="${{ secrets.FRONTEND_URL }}" \
               CloudinaryCloudName="${{ secrets.CLOUDINARY_CLOUD_NAME }}" \
               CloudinaryAPIKey="${{ secrets.CLOUDINARY_API_KEY }}" \
-              CloudinaryAPISecret="${{ secrets.CLOUDINARY_API_SECRET }}"
+              CloudinaryAPISecret="${{ secrets.CLOUDINARY_API_SECRET }}" \
+              EmailUser="${{ secrets.EMAIL_USER }}" \
+              EmailPass="${{ secrets.EMAIL_PASS }}" \
+              FromEmail="${{ secrets.FROM_EMAIL }}"
 
       - name: Deployment completed
         run: |

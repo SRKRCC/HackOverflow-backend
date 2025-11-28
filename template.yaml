@@ -26,6 +26,17 @@ Parameters:
     Type: String
     Description: Cloudinary API Secret
     NoEcho: true
+  EmailUser:
+    Type: String
+    Description: Email username for sending emails
+    NoEcho: true
+  EmailPass:
+    Type: String
+    Description: Email password for sending emails
+    NoEcho: true
+  FromEmail:
+    Type: String
+    Description: From email address for sending emails
 
 Resources:
   # REST API Gateway with explicit stage configuration
@@ -59,6 +70,9 @@ Resources:
           CLOUDINARY_CLOUD_NAME: !Ref CloudinaryCloudName
           CLOUDINARY_API_KEY: !Ref CloudinaryAPIKey
           CLOUDINARY_API_SECRET: !Ref CloudinaryAPISecret
+          EMAIL_USER: !Ref EmailUser
+          EMAIL_PASS: !Ref EmailPass
+          FROM_EMAIL: !Ref FromEmail
           AWS_LAMBDA_NODEJS_DISABLE_CALLBACK_WARNING: true
       Events:
         ApiEvent:
