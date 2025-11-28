@@ -6,12 +6,13 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci && npm cache clean --force
 
-# Copy source and configuration
-COPY dist ./dist
 COPY prisma ./prisma
 
-# Generate Prisma client (build stage will download engines for configured binaryTargets)
 RUN npx prisma generate
+# Copy source and configuration
+COPY dist ./dist
+
+
 
 # Production stage - same base image
 # Runtime stage: Lambda official Node 20 image
@@ -25,7 +26,6 @@ RUN npm ci --omit=dev && npm cache clean --force
 # Copy generated code and runtime node_modules from the build stage
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/src/generated ./src/generated
 COPY --from=build /app/prisma ./prisma
 
 # Set Lambda handler
