@@ -3,7 +3,7 @@ import { prisma } from '../../lib/prisma.js';
 import { uploadImageToCloudinary } from '../../utils/cloudinary.js';
 import type { TeamRegistrationRequest, RegistrationResponse, ValidationError } from '../../types/registration.js';
 import crypto from 'crypto';
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '../../generated/prisma/index.js';
 
 interface MulterFiles {
   [fieldname: string]: Express.Multer.File[];

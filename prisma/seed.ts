@@ -1,7 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../src/lib/prisma.js";
 import { generatePasswordHash } from "../src/utils/jwtService.js";
-
-const prisma = new PrismaClient();
 
 async function seed() {
   console.log("Starting database seeding...");
