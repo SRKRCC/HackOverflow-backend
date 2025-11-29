@@ -92,3 +92,23 @@ model Announcement {
   startTime   DateTime
   endTime     DateTime
 }
+
+model DeletedMember {
+  id               Int      @id @default(autoincrement())
+  original_id      Int      // Original member ID
+  name             String
+  email            String
+  phone_number     String
+  profile_image    String?
+  department       String?
+  college_name     String
+  year_of_study    Int?
+  location         String?
+  attendance       Int      @default(0)
+  tShirtSize       String?
+  teamId           Int?
+  team_title       String?  // Store team name for reference
+  deleted_at       DateTime @default(now())
+  deleted_by_admin String?  // Admin who deleted the member
+  deletion_reason  String?  // Optional reason for deletion
+}

@@ -1,5 +1,6 @@
-import { prisma } from "../../lib/prisma.js";
+import { prisma, connectPrisma } from "../../lib/prisma.js";
 import type { Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 import NodeCache from 'node-cache';
 
 const cache = new NodeCache({ stdTTL: 300 }); // 5 minutes TTL
@@ -14,9 +15,19 @@ interface LeaderboardEntry {
 
 export const fetchLeaderboard = async (): Promise<void> => {
   try {
-    const teams = await prisma.team.findMany({
-      include: { tasks: true },
-    });
+    // Try query; on P5010 (cannot fetch data) attempt reconnect once
+    let teams;
+    try {
+      teams = await prisma.team.findMany({ include: { tasks: true } });
+    } catch (err: any) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P5010') {
+        console.warn('Prisma fetch failed (P5010). Attempting to reconnect...');
+        await connectPrisma();
+        teams = await prisma.team.findMany({ include: { tasks: true } });
+      } else {
+        throw err;
+      }
+    }
 
     const leaderboard: LeaderboardEntry[] = teams.map((team: any) => ({
       id: team.id,                     // match your LeaderboardEntry interface
@@ -28,18 +39,20 @@ export const fetchLeaderboard = async (): Promise<void> => {
       rank: 0, // will update after sorting
     }));
 
-    // ✅ Sort by total points descending
     leaderboard.sort((a, b) => b.totalPoints - a.totalPoints);
 
-    // ✅ Assign ranks after sorting
     leaderboard.forEach((entry, index) => {
       entry.rank = index + 1;
     });
 
     cache.set("leaderboard", leaderboard);
     console.log("Leaderboard cache updated at", new Date().toISOString());
-  } catch (error) {
-    console.error("Error fetching leaderboard:", error);
+  } catch (error: any) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P5010') {
+      console.error('Error fetching leaderboard (DB fetch failed):', error.message);
+    } else {
+      console.error("Error fetching leaderboard:", error);
+    }
   }
 };
 

@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
+import { Prisma } from '@prisma/client';
 import type { Request, Response } from "express";
 
 export const getDetails = async (req: Request, res: Response) => {
@@ -17,6 +18,7 @@ export const getDetails = async (req: Request, res: Response) => {
             where: { id: teamId },
             include: {
                 team_members: true,
+                problem_statement: true,
             },
         });
 
@@ -24,12 +26,18 @@ export const getDetails = async (req: Request, res: Response) => {
             return res.status(404).json({ error: "Team not found" });
         }
 
+        const sortedMembers = [...(team.team_members ?? [])].sort(
+            (a, b) => Number(a.id) - Number(b.id)
+        );
+
         res.json({
             teamId: team.id,
             title: team.title,
-            scc_id : team.scc_id,
-            ps_id : team.ps_id ,
-            team_members: team.team_members,
+            scc_id: team.scc_id,
+            ps_id: team.ps_id,
+            paymentVerified: team.paymentVerified,
+            problem_statement: team.problem_statement ?? null,
+            members: sortedMembers,
         });
     } catch (error) {
         console.error("Error fetching team members:", error);
@@ -37,58 +45,162 @@ export const getDetails = async (req: Request, res: Response) => {
     }
 };
 
-// export const getTeamMembers = async (req: Request, res: Response) => {
-//   try {
-//     const teamId = Number((req as any).teamId || req.params.teamId || req.query.teamId);
+export const patchTeam = async (req: Request, res: Response) => {
+    try {
+        const teamId = Number(req.params.teamId);
+        
+        if (!Number.isFinite(teamId) || Number.isNaN(teamId)) {
+            return res.status(400).json({
+                success: false,
+                message: "teamId must be a valid number"
+            });
+        }
 
-//     if (!teamId) {
-//       return res.status(400).json({ error: "teamId is missing" });
-//     }
+        const existingTeam = await prisma.team.findUnique({
+            where: { id: teamId }
+        });
 
-//     // Find all members with the given teamId
-//     const members = await prisma.member.findMany({
-//       where: { teamId },
-//       select: {
-//         id: true,
-//         name: true,
-//         email: true,
-//         phone_number: true,
-//         profile_image: true,
-//         department: true,
-//         college_name: true,
-//         year_of_study: true,
-//         role: true,
-//       },
-//     });
+        if (!existingTeam) {
+            return res.status(404).json({
+                success: false,
+                message: "Team not found"
+            });
+        }
 
-//     if (members.length === 0) {
-//       return res.status(404).json({ error: "No members found for this team" });
-//     }
+        if (req.body.ps_id) {
+            const problemStatement = await prisma.problemStatement.findUnique({
+                where: { id: req.body.ps_id }
+            });
 
-//     res.json({
-//       teamId,
-//       members,
-//       count: members.length,
-//     });
-//   } catch (error) {
-//     console.error("Error fetching team members:", error);
-//     res.status(500).json({ error: "Internal server error" });
-//   }
-// };
+            if (!problemStatement) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid problem statement ID"
+                });
+            }
+        }
+
+        const updatedTeam = await prisma.team.update({
+            where: { id: teamId },
+            data: req.body,
+            include: {
+            team_members: true,
+            problem_statement: true
+            }
+        });
+
+        if ((updatedTeam as any).scc_password !== undefined) {
+            delete (updatedTeam as any).scc_password;
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Team updated successfully",
+            data: updatedTeam
+        });
+    } catch (error) {
+        console.error("Error updating team:", error);
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P5010') {
+                return res.status(503).json({
+                    success: false,
+                    message: "Database service unavailable. Please try again later."
+                });
+            }
+
+            res.status(500).json({
+                success: false,
+                message: "Internal server error"
+            });
+    }
+};
+
+export const patchMember = async (req: Request, res: Response) => {
+    try {
+        const teamId = Number(req.params.teamId);
+        const memberId = Number(req.params.memberId);
+
+        if (!Number.isFinite(teamId) || Number.isNaN(teamId)) {
+            return res.status(400).json({
+                success: false,
+                message: "teamId must be a valid number"
+            });
+        }
+
+        if (!Number.isFinite(memberId) || Number.isNaN(memberId)) {
+            return res.status(400).json({
+                success: false,
+                message: "memberId must be a valid number"
+            });
+        }
+
+        const existingMember = await prisma.member.findUnique({
+            where: { id: memberId }
+        });
+
+        if (!existingMember) {
+            return res.status(404).json({
+                success: false,
+                message: "Member not found"
+            });
+        }
+
+        if (existingMember.teamId !== teamId) {
+            return res.status(400).json({
+                success: false,
+                message: "Member does not belong to the specified team"
+            });
+        }
+
+        if (req.body.email) {
+            const emailExists = await prisma.member.findFirst({
+                where: {
+                    email: req.body.email,
+                    id: { not: memberId }
+                }
+            });
+
+            if (emailExists) {
+                return res.status(409).json({
+                    success: false,
+                    message: "Email already exists for another member"
+                });
+            }
+        }
+
+        const updatedMember = await prisma.member.update({
+            where: { id: memberId },
+            data: req.body
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Member updated successfully",
+            data: updatedMember
+        });
+    } catch (error) {
+        console.error("Error updating member:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
 
 export const getAllTeams = async (req: Request, res: Response) => {
     try {
         const teams = await prisma.team.findMany({
             include: {
                 team_members: true,
+                problem_statement: true,
             },
         });
 
         const formattedTeams = teams.map((team: any) => ({
             teamId: team.id,
-            scc_id : team.scc_id ,
+            scc_id: team.scc_id,
+            ps_id: team.problem_statement?.psId ?? team.ps_id ?? null,
             title: team.title,
-            members: team.team_members,
+            member_count: team.team_members.length ?? 0,
             paymentVerified: team.paymentVerified,
         }));
 
@@ -99,7 +211,6 @@ export const getAllTeams = async (req: Request, res: Response) => {
     }
 };
 
-// Verify team payment
 export const verifyPayment = async (req: Request, res: Response) => {
     try {
         const { teamId } = req.params;
@@ -129,5 +240,84 @@ export const verifyPayment = async (req: Request, res: Response) => {
     } catch (error) {
         console.error("Error verifying payment:", error);
         res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+export const deleteTeam = async (req: Request, res: Response) => {
+    try {
+        const teamId = Number(req.params.teamId);
+
+        if (!Number.isFinite(teamId) || Number.isNaN(teamId)) {
+            return res.status(400).json({
+                success: false,
+                message: "teamId must be a valid number"
+            });
+        }
+
+        const existingTeam = await prisma.team.findUnique({
+            where: { id: teamId },
+            include: { 
+                team_members: true,
+                problem_statement: true
+            }
+        });
+
+        if (!existingTeam) {
+            return res.status(404).json({
+                success: false,
+                message: "Team not found"
+            });
+        }
+
+        await prisma.$transaction(async (tx) => {
+            for (const member of existingTeam.team_members) {
+                await tx.deletedMember.create({
+                    data: {
+                        original_id: member.id,
+                        name: member.name,
+                        email: member.email,
+                        phone_number: member.phone_number,
+                        profile_image: member.profile_image,
+                        department: member.department,
+                        college_name: member.college_name,
+                        year_of_study: member.year_of_study,
+                        location: member.location,
+                        attendance: member.attendance,
+                        tShirtSize: member.tShirtSize,
+                        teamId: null,
+                        team_title: existingTeam.title,
+                    }
+                });
+            }
+
+            await tx.member.deleteMany({
+                where: { teamId: teamId }
+            });
+
+            await tx.task.deleteMany({
+                where: { teamId: teamId }
+            });
+
+            await tx.team.delete({
+                where: { id: teamId }
+            });
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Team deleted successfully and members moved to archive",
+            data: {
+                teamId: teamId,
+                teamTitle: existingTeam.title,
+                membersArchived: existingTeam.team_members.length,
+                deletedAt: new Date().toISOString()
+            }
+        });
+    } catch (error) {
+        console.error("Error deleting team:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
     }
 };
