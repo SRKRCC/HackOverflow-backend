@@ -73,11 +73,9 @@ export const createAnnouncement = async (req: Request, res: Response) => {
       });
     }
 
-    // Convert to Date objects
     const start = new Date(startTime);
     const end = new Date(endTime);
 
-    // Validate dates
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       return res.status(400).json({
         success: false,
@@ -122,7 +120,6 @@ export const updateAnnouncement = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { title, description, startTime, endTime } = req.body;
 
-    // Check if announcement exists
     const existingAnnouncement = await prisma.announcement.findUnique({
       where: {
         id: Number(id)
@@ -136,7 +133,6 @@ export const updateAnnouncement = async (req: Request, res: Response) => {
       });
     }
 
-    // Prepare update data
     const updateData: any = {};
 
     if (title !== undefined) updateData.title = title;
@@ -164,7 +160,6 @@ export const updateAnnouncement = async (req: Request, res: Response) => {
       updateData.endTime = end;
     }
 
-    // Validate that end time is after start time
     const finalStartTime = updateData.startTime || existingAnnouncement.startTime;
     const finalEndTime = updateData.endTime || existingAnnouncement.endTime;
 
@@ -202,7 +197,6 @@ export const deleteAnnouncement = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    // Check if announcement exists
     const existingAnnouncement = await prisma.announcement.findUnique({
       where: {
         id: Number(id)

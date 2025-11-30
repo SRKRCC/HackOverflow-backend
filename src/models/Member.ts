@@ -15,5 +15,4 @@ export interface Member {
   team?: Team | null;
 }
 
-// Import Team at bottom to avoid circular dependency issues
 import type { Team } from "./Team.js";

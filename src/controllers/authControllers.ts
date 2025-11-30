@@ -20,7 +20,6 @@ export const login = async (req: Request, res: Response) => {
       user = await prisma.admin.findUnique({ where: { email: username } });
       if (user) {
         try {
-          // Verify the hashed password using bcrypt
           const isPasswordValid = await verifyPasswordHash(password, user.password);
           if (isPasswordValid) {
             userRole = "admin";
@@ -33,7 +32,6 @@ export const login = async (req: Request, res: Response) => {
       user = await prisma.team.findFirst({ where: { scc_id: username } });
       if (user && user.scc_password) {
         try {
-          // Verify the hashed password using bcrypt
           const isPasswordValid = await verifyPasswordHash(password, user.scc_password);
           if (isPasswordValid) {
             userRole = "team";
@@ -100,7 +98,6 @@ export const teamLogout = async (req: Request, res: Response) => {
 
 export const adminLogout = async (req: Request, res: Response) => {
   try {
-    // Clear both possible tokens (team or admin)
     res.clearCookie("admin_token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

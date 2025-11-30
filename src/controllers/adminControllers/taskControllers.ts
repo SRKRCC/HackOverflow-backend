@@ -1,20 +1,16 @@
 import { prisma } from "../../lib/prisma.js";
 import type { Request, Response } from "express";
 
-// Create Task (Admin assigns task to team)
 export const createTask = async (req: Request, res: Response) => {
   try {
     const { title, description, difficulty, round_num, points, teamId } = req.body;
     
-    // Validate required fields
     if (!title || !teamId || !round_num) {
       return res.status(400).json({ error: 'Title, teamId, and round_num are required' });
     }
 
-    // Find team by scc_id (teamId can be either numeric ID or scc_id string)
     let team;
     if (typeof teamId === 'string' && isNaN(Number(teamId))) {
-      // If teamId is a string like "SCC001", find by scc_id
       team = await prisma.team.findFirst({
         where: { scc_id: teamId }
       });
@@ -23,7 +19,6 @@ export const createTask = async (req: Request, res: Response) => {
         return res.status(404).json({ error: `Team with scc_id ${teamId} not found` });
       }
     } else {
-      // If teamId is numeric, find by numeric ID
       team = await prisma.team.findUnique({
         where: { id: Number(teamId) }
       });
@@ -39,8 +34,8 @@ export const createTask = async (req: Request, res: Response) => {
         difficulty, 
         round_num, 
         points: points || 0,
-        teamId: team.id, // Use the numeric team ID for the database
-        status: 'Pending', // Default status when admin assigns
+        teamId: team.id,
+        status: 'Pending',
         completed: false,
         in_review: false
       },

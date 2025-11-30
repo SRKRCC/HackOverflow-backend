@@ -12,16 +12,13 @@ const router = Router();
 
 router.use(logger);
 
-// Public registration route (no authentication required)
 router.post("/register", teamRegistrationUpload, handleUploadError, registerTeam);
 
-// Team details
 router.get("/team", authenticateTeam, getDetails);
 
-// Task-related routes for teams
-router.get("/tasks", authenticateTeam, getTeamTasks); // Get all tasks for team
-router.get("/tasks/:id", authenticateTeam, getTaskById); // Get specific task
-router.post("/tasks/:id/submit", authenticateTeam, submitTaskForReview); // Submit task for review
+router.get("/tasks", authenticateTeam, getTeamTasks);
+router.get("/tasks/:id", authenticateTeam, getTaskById);
+router.post("/tasks/:id/submit", authenticateTeam, submitTaskForReview);
 
 router.get("/problem-statement", authenticateTeam, getProblemStatement);
 router.get("/gallery", authenticateTeam, getImages);

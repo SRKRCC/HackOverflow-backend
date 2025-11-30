@@ -5,7 +5,6 @@ import type { Request, Response } from "express";
 // Get tasks assigned to a specific team
 export const getTeamTasks = async (req: Request, res: Response) => {
   try {
-    // Get the processed teamId from the validateTeamId middleware
     const teamId = (req as any).user.teamId;
     
     

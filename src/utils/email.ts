@@ -25,7 +25,6 @@ interface ProblemStatementData {
   isCustom?: boolean;
 }
 
-// Create reusable transporter object using SMTP transport
 const createTransporter = () => {
   return nodemailer.createTransport({
     host: 'smtp.gmail.com',
@@ -38,7 +37,6 @@ const createTransporter = () => {
   });
 };
 
-// Generate HTML email template
 const generateHTMLTemplate = (
   team: TeamData,
   members: MemberData[],
@@ -136,7 +134,6 @@ const generateHTMLTemplate = (
   `;
 };
 
-// Generate plain text email template
 const generateTextTemplate = (
   team: TeamData,
   members: MemberData[],

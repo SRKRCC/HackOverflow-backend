@@ -15,7 +15,6 @@ interface LeaderboardEntry {
 
 export const fetchLeaderboard = async (): Promise<void> => {
   try {
-    // Try query; on P5010 (cannot fetch data) attempt reconnect once
     let teams;
     try {
       teams = await prisma.team.findMany({ include: { tasks: true } });
@@ -30,13 +29,13 @@ export const fetchLeaderboard = async (): Promise<void> => {
     }
 
     const leaderboard: LeaderboardEntry[] = teams.map((team: any) => ({
-      id: team.id,                     // match your LeaderboardEntry interface
-      title: team.title,                // renamed accordingly
+      id: team.id,
+      title: team.title,
       totalPoints: team.tasks
-        .filter((task: any) => task.status === "Completed")  // ✅ only completed
+        .filter((task: any) => task.status === "Completed")
         .reduce((sum: number, task: any) => sum + (task.points || 0), 0),
       completedTasks: team.tasks.filter((task: any) => task.status === "Completed").length,
-      rank: 0, // will update after sorting
+      rank: 0,
     }));
 
     leaderboard.sort((a, b) => b.totalPoints - a.totalPoints);

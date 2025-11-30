@@ -22,12 +22,10 @@ export const authenticate = (
 ) => {
   let token: string | undefined;
 
-  // 1. Try to get token from cookies
   if (req.cookies?.token) {
     token = req.cookies.token;
   }
 
-  // 2. If no cookie, check Authorization header
   if (!token && req.headers.authorization) {
     const parts = req.headers.authorization.split(" ");
     if (parts.length === 2 && parts[0] === "Bearer") {
@@ -52,7 +50,6 @@ export const authenticate = (
   }
 };
 
-// Role-based middleware (team or admin)
 export const authorizeRole = (role: "team" | "admin") => {
   return (req: CustomRequest, res: Response, next: NextFunction) => {
     if (req.user?.role !== role) {

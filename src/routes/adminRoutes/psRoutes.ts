@@ -27,7 +27,7 @@ const upload = multer({
 
 const router = Router();
 router.use(authenticateAdmin);
-// Admin routes
+
 router.post("/", createSingleStatement);
 router.get("/", getStatements);
 router.get("/:id", getStatementById);

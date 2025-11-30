@@ -3,16 +3,12 @@ import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
 import { prisma } from '../../lib/prisma.js';
 
-// 🧩 Configure Cloudinary using environment variables
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
   api_key: process.env.CLOUDINARY_API_KEY!,
   api_secret: process.env.CLOUDINARY_API_SECRET!,
 });
 
-// ===================================================
-// 1️⃣ Upload Multiple Images to a Team
-// ===================================================
 export const uploadTeamImages = async (req: Request, res: Response): Promise<void> => {
   try {
     const teamId = req.params.teamId;
@@ -23,7 +19,6 @@ export const uploadTeamImages = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    // Upload all images to Cloudinary in parallel
     const uploadPromises = files.map((file) => {
       return new Promise<string>((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
@@ -40,12 +35,11 @@ export const uploadTeamImages = async (req: Request, res: Response): Promise<voi
 
     const uploadedUrls = await Promise.all(uploadPromises);
 
-    // Append new URLs to existing gallery_images array
     const updatedTeam = await prisma.team.update({
       where: { id: Number(teamId) },
       data: {
         gallery_images: {
-          push: uploadedUrls, // ✅ push multiple images at once
+          push: uploadedUrls,
         },
       },
     });
@@ -61,9 +55,7 @@ export const uploadTeamImages = async (req: Request, res: Response): Promise<voi
   }
 };
 
-// ===================================================
-// 2️⃣ Remove a Specific Image from a Team
-// ===================================================
+
 export const removeTeamImage = async (req: Request, res: Response): Promise<void> => {
   try {
     const teamId = req.params.teamId;
@@ -94,9 +86,7 @@ export const removeTeamImage = async (req: Request, res: Response): Promise<void
   }
 };
 
-// ===================================================
-// 3️⃣ Get All Images for a Team
-// ===================================================
+
 export const getTeamImages = async (req: Request, res: Response): Promise<void> => {
   try {
     const teamId = req.params.teamId;

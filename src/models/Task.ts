@@ -22,5 +22,4 @@ export interface Task {
     team?: Team;
 }
 
-// Import Team at bottom
 import type { Team } from "./Team.js";

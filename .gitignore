@@ -8,5 +8,3 @@ uploads/
 .aws-sam/
 
 .vscode/
-
-src/generated

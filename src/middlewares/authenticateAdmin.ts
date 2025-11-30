@@ -23,12 +23,10 @@ export const authenticateAdmin = (
 ) => {
   let token: string | undefined;
 
-  //Check both cookies (admin or team)
   if (req.cookies?.admin_token) {
     token = req.cookies.admin_token;
   }
 
-  // Check Authorization header if cookies missing
   if (!token && req.headers.authorization) {
     const parts = req.headers.authorization.split(" ");
     if (parts.length === 2 && parts[0] === "Bearer") {

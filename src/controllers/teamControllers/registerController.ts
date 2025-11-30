@@ -15,7 +15,6 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
     const registrationData: TeamRegistrationRequest = JSON.parse(req.body.data || '{}');
     const files = req.files as MulterFiles;
 
-    // Validate input
     const validation = await validateRegistrationData(registrationData);
     if (!validation.isValid) {
       res.status(400).json({
@@ -26,11 +25,9 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    // Use Prisma transaction for data consistency
     const result = await prisma.$transaction(async (tx) => {
       const txClient = tx as unknown as PrismaClient;
       
-      // Check for duplicate team name
       const existingTeam = await txClient.team.findFirst({
         where: { title: registrationData.teamName }
       });
@@ -39,7 +36,6 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
         throw new Error('Team name already exists');
       }
 
-      // Check for duplicate member emails
       const memberEmails = [
         registrationData.lead.email,
         ...registrationData.members.map(m => m.email)
@@ -53,10 +49,8 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
         throw new Error(`Email(s) already registered: ${existingMembers.map((m: any) => m.email).join(', ')}`);
       }
 
-      // Handle problem statement
       let problemStatement;
       if (registrationData.problemStatement.isCustom) {
-        // Create custom problem statement
         const customPsId = `CUSTOM_${crypto.randomBytes(8).toString('hex').toUpperCase()}`;
         problemStatement = await txClient.problemStatement.create({
           data: {
@@ -69,7 +63,6 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
           }
         });
       } else {
-        // Use existing problem statement
         if (!registrationData.problemStatement.psId) {
           throw new Error('Problem statement ID is required for non-custom problems');
         }
@@ -83,7 +76,6 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
         }
       }
 
-      // Upload payment screenshot
       let paymentScreenshotUrl = '';
       if (files && files['paymentScreenshot'] && files['paymentScreenshot'][0]) {
         try {
@@ -91,30 +83,25 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
           paymentScreenshotUrl = uploadResult.secure_url;
         } catch (uploadError) {
           console.error('Payment screenshot upload error:', uploadError);
-          // Continue without throwing error - payment verification can be done manually
         }
       }
       
-      // Generate SCC credentials
       const sccId = await generateSccId(txClient);
       const sccPassword = generateSccPassword();
 
-      // Create team
       const team = await txClient.team.create({
         data: {
           scc_id: sccId,
           scc_password: sccPassword,
           title: registrationData.teamName,
           ps_id: problemStatement.id,
-          gallery_images: [], // Initialize empty gallery
-          paymentVerified: false // Default to unverified, admin will verify manually
+          gallery_images: [],
+          paymentVerified: false
         }
       });
 
-      // Upload member photos and create member records
       const memberPromises = [];
 
-      // Handle team lead photo upload
       let leadPhotoUrl = '';
       if (files && files['leadPhoto'] && files['leadPhoto'][0]) {
         try {
@@ -122,7 +109,6 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
           leadPhotoUrl = uploadResult.secure_url;
         } catch (uploadError) {
           console.error('Lead photo upload error:', uploadError);
-          // Continue without throwing error - photo upload is optional
         }
       }      memberPromises.push(
         txClient.member.create({
@@ -142,13 +128,11 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
         })
       );
 
-      // Handle team members
       for (let i = 0; i < registrationData.members.length; i++) {
         const member = registrationData.members[i];
         if (!member) continue; // Skip if member is undefined
         
         let memberPhotoUrl = '';
-        // Handle member photo upload
         const memberPhotoKey = `memberPhoto_${i}`;
         if (files && files[memberPhotoKey] && files[memberPhotoKey][0]) {
           try {
@@ -157,7 +141,6 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
             memberPhotoUrl = uploadResult.secure_url;
           } catch (uploadError) {
             console.error(`Member ${i} photo upload error:`, uploadError);
-            // Continue without throwing error - photo upload is optional
           }
         }
 
@@ -238,19 +221,16 @@ const validateRegistrationData = async (
 ): Promise<{ isValid: boolean; errors: ValidationError[] }> => {
   const errors: ValidationError[] = [];
 
-  // Validate team name
   if (!data.teamName || data.teamName.trim().length < 3) {
     errors.push({ field: 'teamName', message: 'Team name must be at least 3 characters long' });
   }
 
-  // Validate lead data
   if (!data.lead) {
     errors.push({ field: 'lead', message: 'Team lead information is required' });
   } else {
     validateMemberData(data.lead, 'lead', errors);
   }
 
-  // Validate members data
   if (!data.members || data.members.length === 0) {
     errors.push({ field: 'members', message: 'At least 3 team members are required (including lead)' });
   } else {
@@ -259,13 +239,11 @@ const validateRegistrationData = async (
     });
   }
 
-  // Validate team size (lead + members should be 4-6)
   const totalMembers = 1 + (data.members?.length || 0);
   if (totalMembers < 4 || totalMembers > 6) {
     errors.push({ field: 'team', message: 'Team must have 4-6 members including the lead' });
   }
 
-  // Validate problem statement
   if (!data.problemStatement) {
     errors.push({ field: 'problemStatement', message: 'Problem statement is required' });
   } else if (data.problemStatement.isCustom) {
@@ -276,7 +254,6 @@ const validateRegistrationData = async (
     errors.push({ field: 'problemStatement', message: 'Problem statement ID is required for non-custom problems' });
   }
 
-  // Validate payment data
   if (!data.payment) {
     errors.push({ field: 'payment', message: 'Payment information is required' });
   }
@@ -289,7 +266,6 @@ const validateRegistrationData = async (
 
 const validateMemberData = (member: any, prefix: string, errors: ValidationError[]): void => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  // More flexible phone regex to accept various formats
   const phoneRegex = /^(\+91[-\s]?)?[6-9]\d{9}$/;
 
   if (!member.name || member.name.trim().length < 2) {
@@ -329,7 +305,6 @@ const generateSccId = async (tx: any): Promise<string> => {
   const prefix = 'SCC';
   const txClient = tx as unknown as PrismaClient;
   
-  // Get the last team's SCC ID to generate incremental ID
   const lastTeam = await txClient.team.findFirst({
     where: {
       scc_id: {
@@ -346,14 +321,12 @@ const generateSccId = async (tx: any): Promise<string> => {
 
   let nextNumber = 1;
   if (lastTeam && lastTeam.scc_id) {
-    // Extract the number from the last SCC ID (e.g., "SCC001" -> 1)
     const lastNumber = parseInt(lastTeam.scc_id.replace(prefix, ''));
     if (!isNaN(lastNumber)) {
       nextNumber = lastNumber + 1;
     }
   }
 
-  // Pad with zeros to make it 3 digits (SCC001, SCC002, etc.)
   const paddedNumber = nextNumber.toString().padStart(3, '0');
   return `${prefix}${paddedNumber}`;
 };
