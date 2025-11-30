@@ -10,7 +10,8 @@
     "dev": "nodemon --exec \"npx tsx\" src/server.ts",
     "db:seed": "npx tsx prisma/seed.ts",
     "db:push": "prisma db push",
-    "db:migrate": "prisma migrate deploy"
+    "db:migrate": "prisma migrate deploy",
+    "backup": "npx tsx scripts/backup.ts"
   },
   "author": "",
   "license": "ISC",

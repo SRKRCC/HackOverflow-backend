@@ -6,7 +6,6 @@ dotenv.config();
 const WHATSAPP_GROUP_URL = 'https://chat.whatsapp.com/GUg1kFD0let90x7LCA3amy';
 
 interface TeamData {
-  id: number;
   title: string;
   scc_id?: string | null;
   scc_password?: string | null;
@@ -78,10 +77,6 @@ const generateHTMLTemplate = (
           <tr>
             <td style="padding: 8px 0; font-weight: bold;">Team Name:</td>
             <td style="padding: 8px 0;">${team.title}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; font-weight: bold;">Team ID:</td>
-            <td style="padding: 8px 0;">#${team.id}</td>
           </tr>
           ${team.scc_id ? `
           <tr>
@@ -160,7 +155,6 @@ Congratulations! Your team has been successfully registered for HackOverflow 202
 TEAM DETAILS:
 =============
 Team Name: ${team.title}
-Team ID: #${team.id}
 ${team.scc_id ? `SCC ID: ${team.scc_id}\n` : ''}
 Problem Statement: ${problemStatement.psId} - ${problemStatement.title}
 ${problemStatement.isCustom ? '(Custom Problem Statement)\n' : ''}
@@ -189,7 +183,6 @@ HackOverflow 2025 - Organized by SRKR Coding Club
   `.trim();
 };
 
-// Main function to send registration email
 export const sendRegistrationEmail = async (
   team: TeamData,
   members: MemberData[],
@@ -204,7 +197,6 @@ export const sendRegistrationEmail = async (
       return false;
     }
 
-    // Validate environment variables
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
       console.error('Email credentials not configured in environment variables');
       return false;
@@ -213,11 +205,9 @@ export const sendRegistrationEmail = async (
     const transporter = createTransporter();
     const fromEmail = "srkrcodingclubofficial@gmail.com"
 
-    // Generate email content
     const htmlContent = generateHTMLTemplate(team, members, problemStatement, recipientEmail);
     const textContent = generateTextTemplate(team, members, problemStatement, recipientEmail);
 
-    // Email options
     const mailOptions = {
       from: `"HackOverflow 2025" <${fromEmail}>`,
       to: recipientEmail,
@@ -226,7 +216,6 @@ export const sendRegistrationEmail = async (
       html: htmlContent,
     };
 
-    // Send email
     const info = await transporter.sendMail(mailOptions);
     console.log('Registration email sent successfully:', info.messageId);
     console.log('Email sent to:', recipientEmail, 'for team:', team.title);

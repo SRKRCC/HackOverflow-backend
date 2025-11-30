@@ -1,0 +1,45 @@
+name: Database Backup
+
+on:
+  schedule:
+    # Runs every 2 days at 2:00 AM UTC
+    - cron: '0 2 */2 * *'
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    # Only run until December 25, 2025
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.schedule != '' && github.event.repository.updated_at < '2025-12-26') }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Run backup script
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BACKUP_TOKEN: ${{ secrets.BACKUP_TOKEN }}
+          BACKUP_REPO: 'https://github.com/SRKRCC/ho-data-backups.git'
+          CI: true
+        run: npx tsx scripts/backup.ts
+
+      - name: Check date and disable workflow if after Dec 25
+        if: success()
+        run: |
+          current_date=$(date +%Y-%m-%d)
+          if [[ "$current_date" > "2025-12-25" ]]; then
+            echo "Date is after December 25, 2025. Workflow should be disabled."
+            echo "Please disable this workflow manually in GitHub Actions settings."
+          fi
