@@ -195,7 +195,6 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
 
     void sendRegistrationEmail(
       {
-        id: result.teamId,
         title: registrationData.teamName,
         scc_id: result.sccId,
         scc_password: result.sccPassword
