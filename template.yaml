@@ -47,7 +47,7 @@ Resources:
       Cors:
         AllowOrigin: !Sub "'${FrontendURL}'"
         AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token,Accept,Accept-Encoding,Accept-Language,Cache-Control,Connection,Host,Origin,Pragma,Referer,User-Agent,X-Requested-With'"
-        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowMethods: "'GET,POST,PUT,DELETE,PATCH,OPTIONS'"
         AllowCredentials: true
       BinaryMediaTypes:
         - "multipart/form-data"
