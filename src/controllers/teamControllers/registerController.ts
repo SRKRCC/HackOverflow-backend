@@ -200,8 +200,15 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
           phone_number: member.phone
         }))
       ],
-      result.problemStatement
-    ).catch((emailError) => {
+      result.problemStatement,
+      registrationData.lead.email
+    ).then((emailSent) => {
+      if (emailSent) {
+        console.log(`Registration email sent successfully to ${registrationData.lead.email}`);
+      } else {
+        console.error(`Failed to send registration email to ${registrationData.lead.email}`);
+      }
+    }).catch((emailError) => {
       console.error('Failed to send registration email:', emailError);
     });
 
