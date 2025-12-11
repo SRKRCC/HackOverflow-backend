@@ -118,7 +118,7 @@ const generateHTMLTemplate = (
           <li>Prepare for the hackathon - it's going to be amazing! 🚀</li>
           <li style="color:#C62828; font-weight:bold; margin-top:8px;">If you face any payment issues, call <a href="tel:9032149776" style="color: #667eea;">9032149776</a> or visit the registration page and use the payment help option.</li>
           <li style="color:#C62828; font-weight:bold;">If money is debited, please do not attempt payment again, contact the organizers for assistance.</li>
-          <li style="color:#28a745; font-weight:bold; background-color: #d4edda; padding: 10px; border-radius: 4px; margin-top: 8px;">If payment is done, kindly share your receipts to either <a href="https://wa.me/919966542463" style="color: #667eea;">9966542463</a> or <a href="https://wa.me/919032149776" style="color: #667eea;">9032149776</a> on WhatsApp with your team name and size (count of members and count of affiliates).</li>
+          <li style="color:#28a745; font-weight:bold; background-color: #d4edda; padding: 10px; border-radius: 4px; margin-top: 8px;">If payment is done, kindly reply to this email with your payment receipts and team size (count of members and count of affiliates).</li>
         </ul>
       </div>
 
@@ -135,52 +135,6 @@ const generateHTMLTemplate = (
   `;
 };
 
-const generateTextTemplate = (
-  team: TeamData,
-  members: MemberData[],
-  problemStatement: ProblemStatementData,
-  leadEmail: string
-): string => {
-  const membersList = members
-    .map((member, index) => `  ${index + 1}. ${member.name} (${member.email}) - ${member.phone_number || 'No phone'}`)
-    .join('\n');
-
-  return `
-🎉 HACKOVERFLOW 2025 - REGISTRATION SUCCESSFUL! 🎉
-
-Congratulations! Your team has been successfully registered for HackOverflow 2025.
-
-TEAM DETAILS:
-=============
-Team Name: ${team.title}
-${team.scc_id ? `SCC ID: ${team.scc_id}\n` : ''}
-Problem Statement: ${problemStatement.psId} - ${problemStatement.title}
-${problemStatement.isCustom ? '(Custom Problem Statement)\n' : ''}
-
-TEAM MEMBERS:
-=============
-${membersList}
-
-NEXT STEPS:
-===========
-• Keep this email for your records
-• Passwords will be sent separately again
-• Join our WhatsApp group for updates and announcements: ${WHATSAPP_GROUP_URL}  
-• Check our website for event schedule and rules
-• Prepare for the hackathon - it's going to be amazing! 🚀
-• If you face any payment issues, call 9032149776 or go to the registration page and use the payment help option.
-• If money is debited, please do not attempt payment again, contact the organizers for assistance.
-• If payment is done, kindly share your receipts to either 9966542463 or 9032149776 on WhatsApp with your team name and size (count of members and count of affiliates).
-
-
-
-Need help? Contact us at srkrcodingclubofficial@gmail.com
-
-${WHATSAPP_GROUP_URL}
----
-HackOverflow 2025 - Organized by SRKR Coding Club
-  `.trim();
-};
 
 export const sendRegistrationEmail = async (
   team: TeamData,
@@ -205,13 +159,11 @@ export const sendRegistrationEmail = async (
     const fromEmail = "srkrcodingclubofficial@gmail.com"
 
     const htmlContent = generateHTMLTemplate(team, members, problemStatement, recipientEmail);
-    const textContent = generateTextTemplate(team, members, problemStatement, recipientEmail);
 
     const mailOptions = {
       from: `"HackOverflow 2025" <${fromEmail}>`,
       to: recipientEmail,
       subject: `🎉 Registration Successful - Team ${team.title} | HackOverflow 2025`,
-      text: textContent,
       html: htmlContent,
     };
 
