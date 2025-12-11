@@ -51,14 +51,20 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
 
       let problemStatement;
       if (registrationData.problemStatement.isCustom) {
-        const customPsId = `CUSTOM_${crypto.randomBytes(8).toString('hex').toUpperCase()}`;
+        // Count existing custom problem statements to generate sequential ID
+        const customPsCount = await txClient.problemStatement.count({
+          where: { isCustom: true }
+        });
+        const nextIndex = customPsCount + 1;
+        const customPsId = `CUS_${nextIndex.toString().padStart(2, '0')}`;
+        
         problemStatement = await txClient.problemStatement.create({
           data: {
             psId: customPsId,
-            title: registrationData.problemStatement.title,
-            description: registrationData.problemStatement.description,
-            category: registrationData.problemStatement.category,
-            tags: registrationData.problemStatement.tags,
+            title: registrationData.problemStatement.title || 'Custom Problem Statement',
+            description: registrationData.problemStatement.description || 'No description provided',
+            category: registrationData.problemStatement.category || 'General',
+            tags: registrationData.problemStatement.tags || [],
             isCustom: true
           }
         });
@@ -115,13 +121,13 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
           data: {
             name: registrationData.lead.name,
             email: registrationData.lead.email,
-            phone_number: registrationData.lead.phone,
-            college_name: registrationData.lead.collegeName,
-            department: registrationData.lead.department,
-            year_of_study: registrationData.lead.yearOfStudy,
-            location: registrationData.lead.location,
-            tShirtSize: registrationData.lead.tShirtSize,
-            profile_image: leadPhotoUrl,
+            phone_number: registrationData.lead.phone || '',
+            college_name: registrationData.lead.collegeName || 'Not Specified',
+            department: registrationData.lead.department || null,
+            year_of_study: registrationData.lead.yearOfStudy || null,
+            location: registrationData.lead.location || null,
+            tShirtSize: registrationData.lead.tShirtSize || null,
+            profile_image: leadPhotoUrl || null,
             teamId: team.id,
             attendance: 0
           }
@@ -149,13 +155,13 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
             data: {
               name: member.name,
               email: member.email,
-              phone_number: member.phone,
-              college_name: member.collegeName,
-              department: member.department,
-              year_of_study: member.yearOfStudy,
-              location: member.location,
-              tShirtSize: member.tShirtSize,
-              profile_image: memberPhotoUrl,
+              phone_number: member.phone || '',
+              college_name: member.collegeName || 'Not Specified',
+              department: member.department || null,
+              year_of_study: member.yearOfStudy || null,
+              location: member.location || null,
+              tShirtSize: member.tShirtSize || null,
+              profile_image: memberPhotoUrl || null,
               teamId: team.id,
               attendance: 0
             }
@@ -221,41 +227,44 @@ const validateRegistrationData = async (
 ): Promise<{ isValid: boolean; errors: ValidationError[] }> => {
   const errors: ValidationError[] = [];
 
-  if (!data.teamName || data.teamName.trim().length < 3) {
-    errors.push({ field: 'teamName', message: 'Team name must be at least 3 characters long' });
+  // Only validate critical fields that are absolutely required
+  if (!data.teamName || data.teamName.trim().length < 2) {
+    errors.push({ field: 'teamName', message: 'Team name is required (minimum 2 characters)' });
   }
 
-  if (!data.lead) {
-    errors.push({ field: 'lead', message: 'Team lead information is required' });
+  if (!data.lead || !data.lead.name || !data.lead.email) {
+    errors.push({ field: 'lead', message: 'Team lead name and email are required' });
   } else {
     validateMemberData(data.lead, 'lead', errors);
   }
 
-  if (!data.members || data.members.length === 0) {
-    errors.push({ field: 'members', message: 'At least 3 team members are required (including lead)' });
-  } else {
+  // Validate members if present
+  if (data.members && Array.isArray(data.members)) {
     data.members.forEach((member, index) => {
-      validateMemberData(member, `members[${index}]`, errors);
+      if (member && (member.name || member.email)) {
+        validateMemberData(member, `members[${index}]`, errors);
+      }
     });
   }
 
+  // Check team size but don't be too strict
   const totalMembers = 1 + (data.members?.length || 0);
-  if (totalMembers < 4 || totalMembers > 6) {
-    errors.push({ field: 'team', message: 'Team must have 4-6 members including the lead' });
+  if (totalMembers < 3) {
+    errors.push({ field: 'team', message: 'Team must have at least 3 members including the lead' });
   }
 
+  // Problem statement validation
   if (!data.problemStatement) {
     errors.push({ field: 'problemStatement', message: 'Problem statement is required' });
   } else if (data.problemStatement.isCustom) {
-    if (!data.problemStatement.title || !data.problemStatement.description) {
-      errors.push({ field: 'problemStatement', message: 'Custom problem statement must have title and description' });
+    if (!data.problemStatement.title || data.problemStatement.title.trim().length < 5) {
+      errors.push({ field: 'problemStatement', message: 'Custom problem statement must have a title (minimum 5 characters)' });
+    }
+    if (!data.problemStatement.description || data.problemStatement.description.trim().length < 10) {
+      errors.push({ field: 'problemStatement', message: 'Custom problem statement must have a description (minimum 10 characters)' });
     }
   } else if (!data.problemStatement.psId) {
     errors.push({ field: 'problemStatement', message: 'Problem statement ID is required for non-custom problems' });
-  }
-
-  if (!data.payment) {
-    errors.push({ field: 'payment', message: 'Payment information is required' });
   }
 
   return {
@@ -266,8 +275,9 @@ const validateRegistrationData = async (
 
 const validateMemberData = (member: any, prefix: string, errors: ValidationError[]): void => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const phoneRegex = /^(\+91[-\s]?)?[6-9]\d{9}$/;
+  const phoneRegex = /^[\d\s+()-]{10,15}$/; // More flexible phone validation
 
+  // Only validate absolutely required fields
   if (!member.name || member.name.trim().length < 2) {
     errors.push({ field: `${prefix}.name`, message: 'Name must be at least 2 characters long' });
   }
@@ -276,29 +286,16 @@ const validateMemberData = (member: any, prefix: string, errors: ValidationError
     errors.push({ field: `${prefix}.email`, message: 'Valid email address is required' });
   }
 
-  if (!member.phone || !phoneRegex.test(member.phone)) {
-    errors.push({ field: `${prefix}.phone`, message: 'Valid phone number is required (10 digits starting with 6-9, optionally with +91)' });
+  if (!member.phone || !phoneRegex.test(member.phone.toString())) {
+    errors.push({ field: `${prefix}.phone`, message: 'Valid phone number is required (10-15 digits)' });
   }
 
-  if (!member.collegeName || member.collegeName.trim().length < 3) {
+  if (!member.collegeName || member.collegeName.trim().length < 2) {
     errors.push({ field: `${prefix}.collegeName`, message: 'College name is required' });
   }
 
-  if (!member.department) {
-    errors.push({ field: `${prefix}.department`, message: 'Department is required' });
-  }
-
-  if (!member.yearOfStudy || member.yearOfStudy < 1 || member.yearOfStudy > 4) {
-    errors.push({ field: `${prefix}.yearOfStudy`, message: 'Year of study must be between 1-4' });
-  }
-
-  if (!member.location) {
-    errors.push({ field: `${prefix}.location`, message: 'Location is required' });
-  }
-
-  if (!member.tShirtSize || !['XS', 'S', 'M', 'L', 'XL', 'XXL'].includes(member.tShirtSize)) {
-    errors.push({ field: `${prefix}.tShirtSize`, message: 'Valid T-shirt size is required (XS, S, M, L, XL, XXL)' });
-  }
+  // Make these fields optional or more lenient
+  // Department, year of study, location, and t-shirt size are not critical for registration
 };
 
 const generateSccId = async (tx: any): Promise<string> => {
