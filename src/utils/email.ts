@@ -116,8 +116,8 @@ const generateHTMLTemplate = (
           <li>Join our WhatsApp group for quick updates: <a href="${WHATSAPP_GROUP_URL}" style="color: #667eea;">Join WhatsApp Group</a></li>
           <li>Check our website for event schedule and rules</li>
           <li>Prepare for the hackathon - it's going to be amazing! 🚀</li>
-          <li style="color:#C62828; font-weight:bold; margin-top:8px;">If you face any payment issues, call <a href="tel:9100579797" style="color: #667eea;">9100579797</a> or visit the registration page and use the payment help option.</li>
-          <li style="color:#C62828; font-weight:bold;">If money is debited, please do not attempt payment again — contact the organizers for assistance.</li>
+          <li style="color:#C62828; font-weight:bold; margin-top:8px;">If you face any payment issues, call <a href="tel:9032149776" style="color: #667eea;">9032149776</a> or visit the registration page and use the payment help option.</li>
+          <li style="color:#C62828; font-weight:bold;">If money is debited, please do not attempt payment again, contact the organizers for assistance.</li>
           <li style="color:#28a745; font-weight:bold; background-color: #d4edda; padding: 10px; border-radius: 4px; margin-top: 8px;">If payment is done, kindly share your receipts to either <a href="https://wa.me/919966542463" style="color: #667eea;">9966542463</a> or <a href="https://wa.me/919032149776" style="color: #667eea;">9032149776</a> on WhatsApp with your team name and size (count of members and count of affiliates).</li>
         </ul>
       </div>
@@ -168,8 +168,8 @@ NEXT STEPS:
 • Join our WhatsApp group for updates and announcements: ${WHATSAPP_GROUP_URL}  
 • Check our website for event schedule and rules
 • Prepare for the hackathon - it's going to be amazing! 🚀
-• If you face any payment issues, call 9100579797 or go to the registration page and use the payment help option.
-• If money is debited, please do not attempt payment again — contact the organizers for assistance.
+• If you face any payment issues, call 9032149776 or go to the registration page and use the payment help option.
+• If money is debited, please do not attempt payment again, contact the organizers for assistance.
 • If payment is done, kindly share your receipts to either 9966542463 or 9032149776 on WhatsApp with your team name and size (count of members and count of affiliates).
 
 
@@ -224,30 +224,4 @@ export const sendRegistrationEmail = async (
     console.error('Failed to send registration email:', error);
     return false;
   }
-};
-
-
-export const testSendEmail = async () => {
-  const team: TeamData = {
-    title: 'Alpha Team',
-    scc_id: 'SCC12345',
-  };
-
-  const members: MemberData[] = [
-    { name: 'Alice', email: 'williamkeri007@gmail.com', phone_number: '9966542463' },
-    { name: 'Bob', email: 'bob@example.com', phone_number: '0987654321' },
-    { name: 'Charlie', email: 'charlie@example.com', phone_number: '1122334455' },
-  ];
-
-  const problemStatement: ProblemStatementData = {
-    psId: 'PS101',
-    title: 'Build a Smart City App',
-    description: 'An app to manage city resources efficiently.',
-    category: 'Smart Cities',
-    isCustom: false,
-  };
-
-  const leadEmail = 'williamkeri007@gmail.com';  
-  const success = await sendRegistrationEmail(team, members, problemStatement, leadEmail);
-  console.log('Test email sent successfully:', success);
 };
