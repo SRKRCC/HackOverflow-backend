@@ -32,7 +32,7 @@ export const login = async (req: Request, res: Response) => {
       user = await prisma.team.findFirst({ where: { scc_id: username } });
       if (user && user.scc_password) {
         try {
-          const isPasswordValid = await verifyPasswordHash(password, user.scc_password);
+          const isPasswordValid = password === user.scc_password;
           if (isPasswordValid) {
             userRole = "team";
           }
