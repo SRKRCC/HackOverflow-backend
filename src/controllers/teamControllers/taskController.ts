@@ -1,6 +1,8 @@
 import { prisma } from "../../lib/prisma.js";
 import { error } from "console";
 import type { Request, Response } from "express";
+import { auditService } from '../../services/auditService.js';
+import { createAuditContext } from '../../utils/auditHelpers.js';
 
 // Get tasks assigned to a specific team
 export const getTeamTasks = async (req: Request, res: Response) => {
@@ -30,6 +32,21 @@ export const submitTaskForReview = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { teamNotes } = req.body;
+    const teamId = (req as any).user.teamId;
+    
+    const context = createAuditContext(req, { team_id: teamId?.toString() });
+    
+    await auditService.logTask(
+      'SUBMIT_TASK',
+      context,
+      req.path,
+      200,
+      {
+        task_id: id,
+        team_id: teamId,
+        has_notes: !!teamNotes
+      }
+    );
     
     const task = await prisma.task.findUnique({
       where: { id: Number(id) }

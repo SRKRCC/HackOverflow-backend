@@ -91,6 +91,59 @@ Resources:
       Dockerfile: Dockerfile
       DockerContext: ./
       DockerTag: nodejs20.x-v1
+  
+  FirehoseRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: hackoverflow-audit-firehose-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: firehose.amazonaws.com
+            Action: sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: FirehoseS3AndKMS
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:PutObjectAcl
+                  - s3:AbortMultipartUpload
+                  - s3:GetBucketLocation
+                  - s3:ListBucket
+                Resource:
+                  - arn:aws:s3:::hackoverflow-audit-logs-prod-ap-south-1
+                  - arn:aws:s3:::hackoverflow-audit-logs-prod-ap-south-1/*
+
+              - Effect: Allow
+                Action:
+                  - kms:GenerateDataKey
+                  - kms:Encrypt
+                Resource:
+                  - arn:aws:kms:ap-south-1:161266029104:key/aa69749c-3817-4b52-b3ef-a1ece512d06d
+
+  AuditFirehose:
+    Type: AWS::KinesisFirehose::DeliveryStream
+    Properties:
+      DeliveryStreamName: hackoverflow-audit-log-stream
+      DeliveryStreamType: DirectPut
+      S3DestinationConfiguration:
+        BucketARN: arn:aws:s3:::hackoverflow-audit-logs-prod-ap-south-1
+        RoleARN: !GetAtt FirehoseRole.Arn
+        Prefix: "audit_logs/date=!{timestamp:yyyy-MM-dd}/"
+        ErrorOutputPrefix: "audit_logs/dlq/!{firehose:error-output-type}/"
+        BufferingHints:
+          SizeInMBs: 64
+          IntervalInSeconds: 300
+        CompressionFormat: GZIP
+        EncryptionConfiguration:
+          KMSEncryptionConfig:
+            AWSKMSKeyARN: arn:aws:kms:ap-south-1:161266029104:key/aa69749c-3817-4b52-b3ef-a1ece512d06d
 
 Outputs:
   ApiUrl:

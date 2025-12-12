@@ -2,13 +2,33 @@ import dotenv from "dotenv";
 import { prisma } from "../lib/prisma.js";
 import type { Request, Response } from "express";
 import { verifyPasswordHash, generateToken, generatePasswordHash } from "../utils/jwtService.js";
+import { auditService } from '../services/auditService.js';
+import { createAuditContext } from '../utils/auditHelpers.js';
 
 dotenv.config();
 
 export const login = async (req: Request, res: Response) => {
   const { role, username, password } = req.body;
+  const context = createAuditContext(req, { user_id: username });
 
   if (!role || !username || !password) {
+    if (role === 'admin') {
+      await auditService.logAuth(
+        'LOGIN_FAILED',
+        context,
+        req.path,
+        400,
+        { reason: 'Missing credentials', user_type: 'admin' }
+      );
+    } else {
+      await auditService.logTeamAuth(
+        'LOGIN_FAILED',
+        context,
+        req.path,
+        400,
+        { reason: 'Missing credentials' }
+      );
+    }
     return res.status(400).json({ error: "Username, and password are required" });
   }
 
@@ -43,7 +63,42 @@ export const login = async (req: Request, res: Response) => {
     }
 
     if (!user || !userRole) {
+      if (role === 'admin') {
+        await auditService.logAuth(
+          'LOGIN_FAILED',
+          context,
+          req.path,
+          400,
+          { reason: 'Invalid credentials', user_type: 'admin', email: username }
+        );
+      } else {
+        await auditService.logTeamAuth(
+          'LOGIN_FAILED',
+          context,
+          req.path,
+          400,
+          { reason: 'Invalid credentials', scc_id: username }
+        );
+      }
       return res.status(400).json({ error: "No existing User, Please enter valid credentials" });
+    }
+
+    if (role === 'admin') {
+      await auditService.logAuth(
+        'LOGIN_SUCCESS',
+        { ...context, user_id: user.id?.toString() },
+        req.path,
+        200,
+        { user_type: 'admin', email: username }
+      );
+    } else {
+      await auditService.logTeamAuth(
+        'LOGIN_SUCCESS',
+        { ...context, team_id: user.id?.toString() },
+        req.path,
+        200,
+        { scc_id: username, team_name: user.title }
+      );
     }
 
     const payload =

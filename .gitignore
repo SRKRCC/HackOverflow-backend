@@ -8,3 +8,5 @@ uploads/
 .aws-sam/
 
 .vscode/
+
+docs/

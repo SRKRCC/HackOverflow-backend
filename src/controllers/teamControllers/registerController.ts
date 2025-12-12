@@ -4,12 +4,25 @@ import { sendRegistrationEmail } from '../../utils/email.js';
 import type { TeamRegistrationRequest, RegistrationResponse, ValidationError } from '../../types/registration.js';
 import crypto from 'crypto';
 import type { PrismaClient } from '@prisma/client';
+import { logEmailEvent, createAuditContext } from '../../utils/auditHelpers.js';
+import { auditService } from '../../services/auditService.js';
 
 export const registerTeam = async (req: Request, res: Response): Promise<void> => {
   try {
     console.log('\n========== REGISTRATION REQUEST STARTED ==========');
     console.log('Timestamp:', new Date().toISOString());
     console.log('Request body:', JSON.stringify(req.body, null, 2));
+    
+    const context = createAuditContext(req);
+    
+    await auditService.logRegistration(
+      'REGISTER_ATTEMPT',
+      'TEAM_REGISTRATION',
+      context,
+      req.path,
+      200,
+      { team_name: req.body.teamName, member_count: req.body.members?.length }
+    );
     
     const registrationData: TeamRegistrationRequest = req.body as TeamRegistrationRequest;
 
@@ -201,17 +214,48 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
       membersData,
       result.problemStatement,
       leadEmail
-    ).then((emailSent) => {
+    ).then(async (emailSent) => {
+      await logEmailEvent(
+        emailSent,
+        leadEmail,
+        `Registration Confirmation - Team ${registrationData.teamName}`,
+        context,
+        { team_id: result.teamId, scc_id: result.sccId }
+      );
+      
       if (emailSent) {
         console.log(`Registration email sent successfully to ${leadEmail}`);
       } else {
         console.error(`Failed to send registration email to ${leadEmail}`);
       }
-    }).catch((emailError) => {
+    }).catch(async (emailError) => {
       console.error('Email sending error:', emailError);
+      await logEmailEvent(
+        false,
+        leadEmail,
+        `Registration Confirmation - Team ${registrationData.teamName}`,
+        context,
+        { team_id: result.teamId, error: emailError.message }
+      );
     });
 
     console.log('\n--- Sending Success Response to Client ---');
+    
+    await auditService.logRegistration(
+      'REGISTER_SUCCESS',
+      'TEAM_REGISTRATION',
+      { ...context, team_id: result.teamId.toString() },
+      req.path,
+      201,
+      {
+        team_name: registrationData.teamName,
+        team_id: result.teamId,
+        scc_id: result.sccId,
+        member_count: registrationData.members.length,
+        problem_statement: result.problemStatement.psId
+      }
+    );
+    
     res.status(201).json({
       success: true,
       teamId: result.teamId,
@@ -227,6 +271,20 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
     console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
     console.error('=========================================\n');
+    
+    const context = createAuditContext(req);
+    await auditService.logRegistration(
+      'REGISTER_FAILED',
+      'TEAM_REGISTRATION',
+      context,
+      req.path,
+      500,
+      { 
+        error_message: error.message,
+        team_name: req.body?.teamName,
+        member_count: req.body?.members?.length
+      }
+    );
     
     res.status(500).json({
       success: false,
