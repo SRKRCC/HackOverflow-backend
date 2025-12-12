@@ -322,3 +322,160 @@ export const deleteTeam = async (req: Request, res: Response) => {
         });
     }
 };
+
+export const addMember = async (req: Request, res: Response) => {
+    try {
+        const teamId = Number(req.params.teamId);
+
+        if (!Number.isFinite(teamId) || Number.isNaN(teamId)) {
+            return res.status(400).json({
+                success: false,
+                message: "teamId must be a valid number"
+            });
+        }
+
+        const existingTeam = await prisma.team.findUnique({
+            where: { id: teamId },
+            include: { team_members: true }
+        });
+
+        if (!existingTeam) {
+            return res.status(404).json({
+                success: false,
+                message: "Team not found"
+            });
+        }
+
+        // Check if team already has 6 members
+        if (existingTeam.team_members.length >= 6) {
+            return res.status(400).json({
+                success: false,
+                message: "Team already has maximum number of members (6)"
+            });
+        }
+
+        // Validate required fields
+        const { name, email, phone_number, department, college_name, year_of_study, tShirtSize } = req.body;
+
+        if (!name || !email || !phone_number || !department || !college_name || !year_of_study || !tShirtSize) {
+            return res.status(400).json({
+                success: false,
+                message: "All required fields must be provided: name, email, phone_number, department, college_name, year_of_study, tShirtSize"
+            });
+        }
+
+        // Check if email already exists
+        const emailExists = await prisma.member.findFirst({
+            where: { email }
+        });
+
+        if (emailExists) {
+            return res.status(409).json({
+                success: false,
+                message: "Email already exists"
+            });
+        }
+
+        const newMember = await prisma.member.create({
+            data: {
+                name,
+                email,
+                phone_number,
+                department,
+                college_name,
+                year_of_study: Number(year_of_study),
+                location: req.body.location || "",
+                tShirtSize,
+                attendance: 0,
+                teamId
+            }
+        });
+
+        res.status(201).json({
+            success: true,
+            message: "Member added successfully",
+            data: newMember
+        });
+    } catch (error) {
+        console.error("Error adding member:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
+
+export const deleteMember = async (req: Request, res: Response) => {
+    try {
+        const teamId = Number(req.params.teamId);
+        const memberId = Number(req.params.memberId);
+
+        if (!Number.isFinite(teamId) || Number.isNaN(teamId)) {
+            return res.status(400).json({
+                success: false,
+                message: "teamId must be a valid number"
+            });
+        }
+
+        if (!Number.isFinite(memberId) || Number.isNaN(memberId)) {
+            return res.status(400).json({
+                success: false,
+                message: "memberId must be a valid number"
+            });
+        }
+
+        const team = await prisma.team.findUnique({
+            where: { id: teamId },
+            include: { team_members: true }
+        });
+
+        if (!team) {
+            return res.status(404).json({
+                success: false,
+                message: "Team not found"
+            });
+        }
+
+        const existingMember = await prisma.member.findUnique({
+            where: { id: memberId }
+        });
+
+        if (!existingMember) {
+            return res.status(404).json({
+                success: false,
+                message: "Member not found"
+            });
+        }
+
+        if (existingMember.teamId !== teamId) {
+            return res.status(400).json({
+                success: false,
+                message: "Member does not belong to the specified team"
+            });
+        }
+
+        // Check if member is the team lead (first member)
+        const sortedMembers = team.team_members.sort((a, b) => a.id - b.id);
+        if (sortedMembers.length > 0 && sortedMembers[0]?.id === memberId) {
+            return res.status(400).json({
+                success: false,
+                message: "Cannot delete team lead. Transfer leadership first."
+            });
+        }
+
+        await prisma.member.delete({
+            where: { id: memberId }
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Member deleted successfully"
+        });
+    } catch (error) {
+        console.error("Error deleting member:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
