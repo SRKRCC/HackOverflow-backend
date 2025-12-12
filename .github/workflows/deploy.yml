@@ -80,7 +80,7 @@ jobs:
           sam deploy \
             --stack-name ${{ secrets.STACK_NAME }} \
             --region ${{ secrets.AWS_REGION }} \
-            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+            --capabilities CAPABILITY_NAMED_IAM \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset \
             --parameter-overrides \

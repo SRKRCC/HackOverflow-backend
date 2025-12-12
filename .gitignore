@@ -10,3 +10,6 @@ uploads/
 .vscode/
 
 docs/
+
+
+samconfig.toml
