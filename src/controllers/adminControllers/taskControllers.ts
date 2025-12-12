@@ -135,18 +135,20 @@ export const completeTask = async (req: Request, res: Response) => {
       }
     });
     
-    await logTaskDecision(
-      'APPROVE_TASK',
-      req,
-      id as string,
-      {
-        task_title: task.title,
-        team_id: task.teamId,
-        team_scc_id: task.team?.scc_id,
-        review_notes: reviewNotes,
-        points_awarded: task.points
-      }
-    );
+    if (id) {
+      await logTaskDecision(
+        'APPROVE_TASK',
+        req,
+        id.toString(),
+        {
+          task_title: task.title,
+          team_id: task.teamId,
+          team_scc_id: task.team?.scc_id,
+          review_notes: reviewNotes,
+          points_awarded: task.points
+        }
+      );
+    }
     
     res.json({ message: 'Task completed successfully', task: updatedTask });
   } catch (error: any) {

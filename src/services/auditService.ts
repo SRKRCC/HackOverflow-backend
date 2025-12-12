@@ -1,20 +1,23 @@
-import type { AuditLogEntry, AuditContext, LogLevel, EventType, ActionType } from '../types/audit.js';
+import type { LogLevel, EventType, ActionType } from '../types/audit.js';
 import type { Request } from 'express';
+import { audit } from './auditLogger.js';
 import crypto from 'crypto';
+
+interface AuditContext {
+  request_id?: string;
+  user_id?: string;
+  team_id?: string;
+  ip?: string;
+  user_agent?: string;
+}
 
 class AuditService {
   private service: string;
   private env: string;
-  private enableConsoleOutput: boolean;
-  private enableFileOutput: boolean;
-  private enableCloudWatch: boolean;
 
   constructor() {
     this.service = 'hackoverflow-backend';
-    this.env = process.env.NODE_ENV || 'development';
-    this.enableConsoleOutput = process.env.AUDIT_CONSOLE === 'true' || this.env === 'development';
-    this.enableFileOutput = process.env.AUDIT_FILE === 'true' || false;
-    this.enableCloudWatch = process.env.AUDIT_CLOUDWATCH === 'true' || false;
+    this.env = process.env.NODE_ENV || 'production';
   }
 
   generateRequestId(): string {
@@ -22,15 +25,32 @@ class AuditService {
   }
 
   extractContext(req: Request): AuditContext {
-    return {
+    const context: AuditContext = {
       request_id: req.headers['x-request-id'] as string || this.generateRequestId(),
       user_id: (req as any).user?.id || (req as any).user?.scc_id,
       team_id: (req as any).team?.id,
-      ip: req.ip || req.socket.remoteAddress || req.headers['x-forwarded-for'] as string
+      ip: req.ip || req.socket.remoteAddress || (req.headers['x-forwarded-for'] as string)
     };
+    
+    if (req.headers['user-agent']) {
+      context.user_agent = req.headers['user-agent'];
+    }
+    
+    return context;
   }
 
-  private createLogEntry(
+  private async outputLog(entry: any): Promise<void> {
+    try {
+      // Send to S3 via Firehose
+      await audit(entry);
+    } catch (error) {
+      // Fallback to console in case S3 fails
+      console.error('[AUDIT ERROR]', error);
+      console.log('[AUDIT FALLBACK]', JSON.stringify(entry));
+    }
+  }
+
+  private buildEntry(
     level: LogLevel,
     event_type: EventType,
     action: ActionType,
@@ -39,53 +59,27 @@ class AuditService {
     resource?: string,
     status_code?: number,
     meta?: Record<string, any>
-  ): AuditLogEntry {
-    const timestamp = new Date().toISOString();
-    const date = timestamp.split('T')[0] || '';
-
-    const entry: AuditLogEntry = {
-      timestamp,
-      date,
+  ): any {
+    const entry: any = {
       service: this.service,
       env: this.env,
       level,
       event_type,
       action,
-      message,
+      message
     };
 
-    if (context?.request_id) entry.request_id = context.request_id;
-    if (context?.user_id) entry.user_id = context.user_id;
-    if (context?.team_id) entry.team_id = context.team_id;
-    if (resource) entry.resource = resource;
+    if (context?.request_id !== undefined) entry.request_id = context.request_id;
+    if (context?.user_id !== undefined) entry.user_id = context.user_id;
+    if (context?.team_id !== undefined) entry.team_id = context.team_id;
+    if (resource !== undefined) entry.resource = resource;
     if (status_code !== undefined) entry.status_code = status_code;
-    if (context?.ip) entry.ip = context.ip;
-    if (meta) entry.meta = meta;
+    if (context?.ip !== undefined) entry.ip = context.ip;
+    if (context?.user_agent !== undefined) entry.user_agent = context.user_agent;
+    if (meta !== undefined) entry.meta = meta;
 
     return entry;
   }
-
-  private async outputLog(entry: AuditLogEntry): Promise<void> {
-    const logString = JSON.stringify(entry);
-
-    if (this.enableConsoleOutput) {
-      const colorMap = {
-        INFO: '\x1b[36m',    // Cyan
-        WARN: '\x1b[33m',    // Yellow
-        ERROR: '\x1b[31m',   // Red
-        DEBUG: '\x1b[35m'    // Magenta
-      };
-      const color = colorMap[entry.level] || '\x1b[0m';
-      console.log(`${color}[AUDIT]${'\x1b[0m'} ${logString}`);
-    }
-
-    // CloudWatch output (production)
-    if (this.enableCloudWatch) {
-      // TODO: Send to CloudWatch Logs
-      // Could use aws-sdk or winston-cloudwatch
-    }
-  }
-
 
   async logAuth(
     action: 'LOGIN_ATTEMPT' | 'LOGIN_SUCCESS' | 'LOGIN_FAILED' | 'LOGOUT_SUCCESS',
@@ -98,20 +92,9 @@ class AuditService {
     const level: LogLevel = action.includes('FAILED') ? 'WARN' : 'INFO';
     const message = `User ${action.toLowerCase().replace('_', ' ')} on ${resource}`;
 
-    const entry = this.createLogEntry(
-      level,
-      event_type,
-      action,
-      message,
-      context,
-      resource,
-      status_code,
-      meta
-    );
-
+    const entry = this.buildEntry(level, event_type, action, message, context, resource, status_code, meta);
     await this.outputLog(entry);
   }
-
 
   async logTeamAuth(
     action: 'LOGIN_ATTEMPT' | 'LOGIN_SUCCESS' | 'LOGIN_FAILED' | 'LOGOUT_SUCCESS',
@@ -124,17 +107,7 @@ class AuditService {
     const level: LogLevel = action.includes('FAILED') ? 'WARN' : 'INFO';
     const message = `Team ${action.toLowerCase().replace('_', ' ')} on ${resource}`;
 
-    const entry = this.createLogEntry(
-      level,
-      event_type,
-      action,
-      message,
-      context,
-      resource,
-      status_code,
-      meta
-    );
-
+    const entry = this.buildEntry(level, event_type, action, message, context, resource, status_code, meta);
     await this.outputLog(entry);
   }
 
@@ -149,17 +122,7 @@ class AuditService {
     const level: LogLevel = action === 'REGISTER_FAILED' ? 'ERROR' : 'INFO';
     const message = `${type.toLowerCase().replace('_', ' ')} ${action.toLowerCase().replace('_', ' ')}`;
 
-    const entry = this.createLogEntry(
-      level,
-      type,
-      action,
-      message,
-      context,
-      resource,
-      status_code,
-      meta
-    );
-
+    const entry = this.buildEntry(level, type, action, message, context, resource, status_code, meta);
     await this.outputLog(entry);
   }
 
@@ -174,20 +137,9 @@ class AuditService {
                                  action === 'APPROVE_TASK' ? 'TASK_APPROVAL' : 'TASK_REJECTION';
     const message = `Task ${action.toLowerCase().replace('_', ' ')}`;
 
-    const entry = this.createLogEntry(
-      'INFO',
-      event_type,
-      action,
-      message,
-      context,
-      resource,
-      status_code,
-      meta
-    );
-
+    const entry = this.buildEntry('INFO', event_type, action, message, context, resource, status_code, meta);
     await this.outputLog(entry);
   }
-
 
   async logAdmin(
     action: ActionType,
@@ -197,17 +149,7 @@ class AuditService {
     message: string,
     meta?: Record<string, any>
   ): Promise<void> {
-    const entry = this.createLogEntry(
-      'INFO',
-      'ADMIN_ACTION',
-      action,
-      message,
-      context,
-      resource,
-      status_code,
-      meta
-    );
-
+    const entry = this.buildEntry('INFO', 'ADMIN_ACTION', action, message, context, resource, status_code, meta);
     await this.outputLog(entry);
   }
 
@@ -224,17 +166,7 @@ class AuditService {
     const message = `Email ${success ? 'sent to' : 'failed to send to'} ${recipient}: ${subject}`;
     const finalMeta = { ...meta, recipient, subject };
 
-    const entry = this.createLogEntry(
-      level,
-      event_type,
-      action,
-      message,
-      context,
-      undefined,
-      success ? 200 : 500,
-      finalMeta
-    );
-
+    const entry = this.buildEntry(level, event_type, action, message, context, undefined, success ? 200 : 500, finalMeta);
     await this.outputLog(entry);
   }
 
@@ -245,17 +177,7 @@ class AuditService {
     message: string,
     meta?: Record<string, any>
   ): Promise<void> {
-    const entry = this.createLogEntry(
-      'WARN',
-      'SECURITY_EVENT',
-      action,
-      message,
-      context,
-      resource,
-      403,
-      meta
-    );
-
+    const entry = this.buildEntry('WARN', 'SECURITY_EVENT', action, message, context, resource, 403, meta);
     await this.outputLog(entry);
   }
 
@@ -271,17 +193,7 @@ class AuditService {
       error_stack: error.stack
     };
 
-    const entry = this.createLogEntry(
-      'ERROR',
-      'SYSTEM_ERROR',
-      'VIEW_DATA',
-      error.message,
-      context,
-      resource,
-      500,
-      finalMeta
-    );
-
+    const entry = this.buildEntry('ERROR', 'SYSTEM_ERROR', 'VIEW_DATA', error.message, context, resource, 500, finalMeta);
     await this.outputLog(entry);
   }
 }
