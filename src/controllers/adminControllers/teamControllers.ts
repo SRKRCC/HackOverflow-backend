@@ -189,6 +189,7 @@ export const patchMember = async (req: Request, res: Response) => {
 export const getAllTeams = async (req: Request, res: Response) => {
     try {
         const teams = await prisma.team.findMany({
+            orderBy: { id: 'asc' },
             include: {
                 team_members: true,
                 problem_statement: true,
