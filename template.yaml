@@ -74,6 +74,16 @@ Resources:
           EMAIL_PASS: !Ref EmailPass
           FROM_EMAIL: !Ref FromEmail
           AWS_LAMBDA_NODEJS_DISABLE_CALLBACK_WARNING: true
+          
+      Policies:
+          Statement:
+            - Effect: Allow
+              Action:
+                - firehose:PutRecord
+                - firehose:PutRecordBatch
+              Resource:
+                - arn:aws:firehose:ap-south-1:161266029104:deliverystream/hackoverflow-audit-log-stream
+
       Events:
         ApiEvent:
           Type: Api
