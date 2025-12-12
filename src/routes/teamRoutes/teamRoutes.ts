@@ -6,13 +6,12 @@ import { registerTeam } from "../../controllers/teamControllers/registerControll
 import { logger } from "../../middlewares/logger.js";
 import { authenticateTeam } from "../../middlewares/authenticateTeam.js";
 import { teamLogout } from "../../controllers/authControllers.js";
-import { teamRegistrationUpload, handleUploadError } from "../../middlewares/uploadMiddleware.js";
 
 const router = Router();
 
 router.use(logger);
 
-router.post("/register", teamRegistrationUpload, handleUploadError, registerTeam);
+router.post("/register", registerTeam);
 
 router.get("/team", authenticateTeam, getDetails);
 

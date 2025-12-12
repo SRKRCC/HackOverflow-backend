@@ -1,22 +1,47 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../../lib/prisma.js';
-import { uploadImageToCloudinary } from '../../utils/cloudinary.js';
 import { sendRegistrationEmail } from '../../utils/email.js';
 import type { TeamRegistrationRequest, RegistrationResponse, ValidationError } from '../../types/registration.js';
 import crypto from 'crypto';
 import type { PrismaClient } from '@prisma/client';
 
-interface MulterFiles {
-  [fieldname: string]: Express.Multer.File[];
-}
-
 export const registerTeam = async (req: Request, res: Response): Promise<void> => {
   try {
-    const registrationData: TeamRegistrationRequest = JSON.parse(req.body.data || '{}');
-    const files = req.files as MulterFiles;
+    console.log('\n========== REGISTRATION REQUEST STARTED ==========');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    
+    const registrationData: TeamRegistrationRequest = req.body as TeamRegistrationRequest;
 
+    if (!registrationData.members || !Array.isArray(registrationData.members) || registrationData.members.length === 0) {
+      console.log('No members array provided.');
+      res.status(400).json({
+        success: false,
+        message: 'Members array is required with at least the lead as the first member'
+      } as RegistrationResponse);
+      return;
+    }
+
+    const lead = registrationData.members[0];
+    const otherMembers = registrationData.members.slice(1);
+
+    if (!lead || lead.email === undefined || lead.email === '') {
+      console.log('No lead member data provided.');
+      res.status(400).json({
+        success: false,
+        message: 'Lead member data is required'
+      } as RegistrationResponse);
+      return;
+    }
+    
+    console.log('Team Name:', registrationData.teamName);
+    console.log('Lead Email:', lead.email);
+    console.log('Other Members Count:', otherMembers.length);
+
+    console.log('\n--- Starting Validation ---');
     const validation = await validateRegistrationData(registrationData);
     if (!validation.isValid) {
+      console.log('Validation Failed:', validation.errors);
       res.status(400).json({
         success: false,
         message: 'Validation failed',
@@ -24,7 +49,9 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
       } as RegistrationResponse);
       return;
     }
+    console.log('Validation Passed');
 
+    console.log('\n--- Starting Database Transaction ---');
     const result = await prisma.$transaction(async (tx) => {
       const txClient = tx as unknown as PrismaClient;
       
@@ -36,10 +63,7 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
         throw new Error('Team name already exists');
       }
 
-      const memberEmails = [
-        registrationData.lead.email,
-        ...registrationData.members.map(m => m.email)
-      ];
+      const memberEmails = registrationData.members.map(m => m.email);
       
       const existingMembers = await txClient.member.findMany({
         where: { email: { in: memberEmails } }
@@ -82,16 +106,6 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
         }
       }
 
-      let paymentScreenshotUrl = '';
-      if (files && files['paymentScreenshot'] && files['paymentScreenshot'][0]) {
-        try {
-          const uploadResult = await uploadImageToCloudinary(files['paymentScreenshot'][0].buffer, 'payments');
-          paymentScreenshotUrl = uploadResult.secure_url;
-        } catch (uploadError) {
-          console.error('Payment screenshot upload error:', uploadError);
-        }
-      }
-      
       const sccId = await generateSccId(txClient);
       const sccPassword = generateSccPassword();
 
@@ -107,48 +121,28 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
       });
 
       const memberPromises = [];
-
-      let leadPhotoUrl = '';
-      if (files && files['leadPhoto'] && files['leadPhoto'][0]) {
-        try {
-          const uploadResult = await uploadImageToCloudinary(files['leadPhoto'][0].buffer, 'member-photos');
-          leadPhotoUrl = uploadResult.secure_url;
-        } catch (uploadError) {
-          console.error('Lead photo upload error:', uploadError);
-        }
-      }      memberPromises.push(
+      
+      memberPromises.push(
         txClient.member.create({
           data: {
-            name: registrationData.lead.name,
-            email: registrationData.lead.email,
-            phone_number: registrationData.lead.phone || '',
-            college_name: registrationData.lead.collegeName || 'Not Specified',
-            department: registrationData.lead.department || null,
-            year_of_study: registrationData.lead.yearOfStudy || null,
-            location: registrationData.lead.location || null,
-            tShirtSize: registrationData.lead.tShirtSize || null,
-            profile_image: leadPhotoUrl || null,
+            name: lead.name,
+            email: lead.email,
+            phone_number: lead.phone || '',
+            college_name: lead.collegeName || 'Not Specified',
+            department: lead.department || null,
+            year_of_study: lead.yearOfStudy || null,
+            location: lead.location || null,
+            tShirtSize: lead.tShirtSize || null,
+            profile_image: null,
             teamId: team.id,
             attendance: 0
           }
         })
       );
 
-      for (let i = 0; i < registrationData.members.length; i++) {
-        const member = registrationData.members[i];
-        if (!member) continue; // Skip if member is undefined
-        
-        let memberPhotoUrl = '';
-        const memberPhotoKey = `memberPhoto_${i}`;
-        if (files && files[memberPhotoKey] && files[memberPhotoKey][0]) {
-          try {
-            const memberPhotoFile = files[memberPhotoKey][0];
-            const uploadResult = await uploadImageToCloudinary(memberPhotoFile.buffer, 'member-photos');
-            memberPhotoUrl = uploadResult.secure_url;
-          } catch (uploadError) {
-            console.error(`Member ${i} photo upload error:`, uploadError);
-          }
-        }
+      for (let i = 0; i < otherMembers.length; i++) {
+        const member = otherMembers[i];
+        if (!member) continue;
 
         memberPromises.push(
           txClient.member.create({
@@ -161,7 +155,7 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
               year_of_study: member.yearOfStudy || null,
               location: member.location || null,
               tShirtSize: member.tShirtSize || null,
-              profile_image: memberPhotoUrl || null,
+              profile_image: null,
               teamId: team.id,
               attendance: 0
             }
@@ -177,50 +171,62 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
         sccPassword: sccPassword,
         team: team,
         problemStatement: problemStatement,
-        allMembers: [registrationData.lead, ...registrationData.members]
+        allMembers: registrationData.members
       };
     });
 
+    console.log('\n--- Transaction Completed Successfully ---');
+    console.log('Team ID:', result.teamId);
+    console.log('SCC ID:', result.sccId);
+    console.log('Problem Statement:', result.problemStatement.psId);
 
-    void sendRegistrationEmail(
+    console.log('\n--- Preparing Email Data ---');
+    const leadEmail = lead.email;
+    const membersData = registrationData.members.map(member => ({
+      name: member.name,
+      email: member.email,
+      phone_number: member.phone
+    }));
+    
+    console.log('Lead Email:', leadEmail);
+    console.log('Total Members:', membersData.length);
+
+    console.log('\n--- Attempting to Send Email ---');
+    sendRegistrationEmail(
       {
         title: registrationData.teamName,
         scc_id: result.sccId,
         scc_password: result.sccPassword
       },
-      [
-        {
-          name: registrationData.lead.name,
-          email: registrationData.lead.email,
-          phone_number: registrationData.lead.phone
-        },
-        ...registrationData.members.map(member => ({
-          name: member.name,
-          email: member.email,
-          phone_number: member.phone
-        }))
-      ],
+      membersData,
       result.problemStatement,
-      registrationData.lead.email
+      leadEmail
     ).then((emailSent) => {
       if (emailSent) {
-        console.log(`Registration email sent successfully to ${registrationData.lead.email}`);
+        console.log(`Registration email sent successfully to ${leadEmail}`);
       } else {
-        console.error(`Failed to send registration email to ${registrationData.lead.email}`);
+        console.error(`Failed to send registration email to ${leadEmail}`);
       }
     }).catch((emailError) => {
-      console.error('Failed to send registration email:', emailError);
+      console.error('Email sending error:', emailError);
     });
 
+    console.log('\n--- Sending Success Response to Client ---');
     res.status(201).json({
       success: true,
       teamId: result.teamId,
       sccId: result.sccId,
       message: `Team "${registrationData.teamName}" registered successfully! Your SCC ID is ${result.sccId}. Please save your credentials safely.`
     } as RegistrationResponse);
+    
+    console.log('========== REGISTRATION REQUEST COMPLETED ==========\n');
 
   } catch (error: any) {
-    console.error('Registration error:', error);
+    console.error('\n========== REGISTRATION ERROR ==========');
+    console.error('Error occurred at:', new Date().toISOString());
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('=========================================\n');
     
     res.status(500).json({
       success: false,
@@ -239,23 +245,18 @@ const validateRegistrationData = async (
     errors.push({ field: 'teamName', message: 'Team name is required (minimum 2 characters)' });
   }
 
-  if (!data.lead || !data.lead.name || !data.lead.email) {
-    errors.push({ field: 'lead', message: 'Team lead name and email are required' });
+  // Validate members (first member is lead)
+  if (!data.members || data.members.length === 0) {
+    errors.push({ field: 'members', message: 'At least one member (lead) is required' });
   } else {
-    validateMemberData(data.lead, 'lead', errors);
-  }
-
-  // Validate members if present
-  if (data.members && Array.isArray(data.members)) {
     data.members.forEach((member, index) => {
-      if (member && (member.name || member.email)) {
-        validateMemberData(member, `members[${index}]`, errors);
-      }
+      const label = index === 0 ? 'lead' : `members[${index}]`;
+      validateMemberData(member, label, errors);
     });
   }
 
-  // Check team size but don't be too strict
-  const totalMembers = 1 + (data.members?.length || 0);
+  // Check team size - members array includes lead
+  const totalMembers = data.members?.length || 0;
   if (totalMembers < 3) {
     errors.push({ field: 'team', message: 'Team must have at least 3 members including the lead' });
   }

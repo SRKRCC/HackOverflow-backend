@@ -3,11 +3,10 @@ export interface MemberRegistrationData {
   email: string;
   phone: string;
   collegeName: string;
-  department: string;
-  yearOfStudy: number;
-  location: string;
-  tShirtSize: string;
-  photo: any; // File object/path - will be handled as Express.Multer.File
+  department?: string;
+  yearOfStudy?: number;
+  location?: string;
+  tShirtSize?: string;
 }
 
 export interface ProblemStatementData {
@@ -28,10 +27,9 @@ export interface PaymentData {
 
 export interface TeamRegistrationRequest {
   teamName: string;
-  lead: MemberRegistrationData;
   members: MemberRegistrationData[];
   problemStatement: ProblemStatementData;
-  payment: PaymentData;
+  payment?: PaymentData;
 }
 
 export interface ValidationError {

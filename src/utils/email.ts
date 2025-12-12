@@ -142,38 +142,71 @@ export const sendRegistrationEmail = async (
   problemStatement: ProblemStatementData,
   leadEmail?: string
 ): Promise<boolean> => {
+  console.log('\n[EMAIL] Starting email send process...');
+  console.log('[EMAIL] Environment check:', {
+    hasUser: !!process.env.EMAIL_USER,
+    hasPass: !!process.env.EMAIL_PASS,
+    hasFromEmail: !!process.env.FROM_EMAIL,
+    smtpHost: process.env.SMTP_HOST,
+    smtpPort: process.env.SMTP_PORT
+  });
+  
   try {
     const recipientEmail = leadEmail || members[0]?.email;
     
+    console.log('[EMAIL] Recipient email:', recipientEmail);
+    
     if (!recipientEmail) {
-      console.error('No recipient email available for team:', team.title);
+      console.error('[EMAIL] No recipient email found');
       return false;
     }
 
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      console.error('Email credentials not configured in environment variables');
+      console.error('[EMAIL] Email credentials not configured in environment variables');
       return false;
     }
 
-    const transporter = createTransporter();
-    const fromEmail = "srkrcodingclubofficial@gmail.com"
-
+    console.log('[EMAIL] Generating HTML template...');
     const htmlContent = generateHTMLTemplate(team, members, problemStatement, recipientEmail);
+    console.log('[EMAIL] HTML template generated successfully, length:', htmlContent.length);
 
+    console.log('[EMAIL] Creating transporter...');
+    const transporter = createTransporter();
+    console.log('[EMAIL] Transporter created');
+
+    console.log('[EMAIL] Verifying transporter connection...');
+    await transporter.verify();
+    console.log('[EMAIL] Transporter verified successfully');
+
+    const fromEmail = process.env.FROM_EMAIL || "srkrcodingclubofficial@gmail.com";
+
+    console.log('[EMAIL] Preparing mail options...');
     const mailOptions = {
       from: `"HackOverflow 2025" <${fromEmail}>`,
       to: recipientEmail,
-      subject: `🎉 Registration Successful - Team ${team.title} | HackOverflow 2025`,
+      subject: `Registration Successful - Team ${team.title} | HackOverflow 2025`,
       html: htmlContent,
     };
+    console.log('[EMAIL] Mail options:', {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject,
+      htmlLength: mailOptions.html.length
+    });
 
+    console.log('[EMAIL] Sending email...');
     const info = await transporter.sendMail(mailOptions);
-    console.log('Registration email sent successfully:', info.messageId);
-    console.log('Email sent to:', recipientEmail, 'for team:', team.title);
+    console.log('[EMAIL] Email sent successfully!');
+    console.log('[EMAIL] Message ID:', info.messageId);
+    console.log('[EMAIL] Response:', info.response);
     
     return true;
-  } catch (error) {
-    console.error('Failed to send registration email:', error);
+  } catch (error: any) {
+    console.error('[EMAIL] Failed to send email');
+    console.error('[EMAIL] Error type:', error.constructor.name);
+    console.error('[EMAIL] Error message:', error.message);
+    console.error('[EMAIL] Error code:', error.code);
+    console.error('[EMAIL] Error stack:', error.stack);
     return false;
   }
 };
