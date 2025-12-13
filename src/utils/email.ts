@@ -43,7 +43,7 @@ export const sendRegistrationEmail = async (
 
     console.log('[EMAIL] Sending email via Resend...');
     const { data, error } = await resend.emails.send({
-      from: 'HackOverflow <notifications@info.srkrcodingclub.in>',
+      from: 'HackOverflow Team <notifications@info.srkrcodingclub.in>',
       to: recipientEmail,
       cc: 'srkrcodingclubofficial@gmail.com',
       subject: `Registration Successful - Team ${team.title} | HackOverflow 2025`,

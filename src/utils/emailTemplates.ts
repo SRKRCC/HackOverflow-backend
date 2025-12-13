@@ -48,7 +48,10 @@ export const generateRegistrationEmailHTML = (
     </head>
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-        <h1 style="color: white; margin: 0; text-align: center;">🎉 Registration Successful!</h1>
+        <div style="text-align: center; margin-bottom: 15px;">
+          <img src="https://srkrcodingclub.in/logonobg.png" alt="SRKR Coding Club" style="width: 80px; height: auto;" />
+        </div>
+        <h1 style="color: white; margin: 0; text-align: center;">Registration Successful!</h1>
         <p style="color: white; text-align: center; margin: 10px 0 0 0;">Welcome to HackOverflow 2025</p>
       </div>
 
@@ -99,12 +102,12 @@ export const generateRegistrationEmailHTML = (
           <li>Join our WhatsApp group for quick updates: <a href="${WHATSAPP_GROUP_URL}" style="color: #667eea;">Join WhatsApp Group</a></li>
           <li>Check our website for event schedule and rules</li>
           <li>Prepare for the hackathon - it's going to be amazing! 🚀</li>
-          <li style="color:#C62828; font-weight:bold; margin-top:8px;">If you face any payment issues, call <a href="tel:9032149776" style="color: #667eea;">9032149776</a> or visit the registration page and use the payment help option.</li>
-          <li style="color:#C62828; font-weight:bold;">If money is debited, please do not attempt payment again, contact the organizers for assistance.</li>
-          <li style="color:#28a745; font-weight:bold; background-color: #d4edda; padding: 10px; border-radius: 4px; margin-top: 8px;">If payment is done, kindly reply to this email with your payment receipts and team size (count of members and count of affiliates).</li>
+          <li style="color:#C62828; font-weight:bold; margin-top:8px;">For payment-related queries, contact <a href="tel:9032149776" style="color: #667eea;">9032149776</a> or visit the registration page and use the payment option.</li>
+          <li style="color:#C62828; font-weight:bold;">If the payment was processed, avoid attempting again., contact the organizers for assistance.</li>
+          <li style="color:#28a745; font-weight:bold; background-color: #d4edda; padding: 10px; border-radius: 4px; margin-top: 8px;">If payment is done, kindly forward it to <a href="mailto:srkrcodingclubofficial@gmail.com" style="color: #667eea;">srkrcodingclubofficial@gmail.com</a> with your team name, payment receipts and team size (count of members and count of affiliates).</li>
         </ul>
       </div>
-
+email
       <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
         <p style="color: #6c757d; margin: 0;">
           Need help? Contact us at <a href="mailto:srkrcodingclubofficial@gmail.com" style="color: #667eea;">srkrcodingclubofficial@gmail.com</a>
