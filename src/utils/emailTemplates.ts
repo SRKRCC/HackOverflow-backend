@@ -107,7 +107,7 @@ export const generateRegistrationEmailHTML = (
           <li style="color:#28a745; font-weight:bold; background-color: #d4edda; padding: 10px; border-radius: 4px; margin-top: 8px;">If payment is done, kindly forward it to <a href="mailto:srkrcodingclubofficial@gmail.com" style="color: #667eea;">srkrcodingclubofficial@gmail.com</a> with your team name, payment receipts and team size (count of members and count of affiliates).</li>
         </ul>
       </div>
-email
+
       <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
         <p style="color: #6c757d; margin: 0;">
           Need help? Contact us at <a href="mailto:srkrcodingclubofficial@gmail.com" style="color: #667eea;">srkrcodingclubofficial@gmail.com</a>
