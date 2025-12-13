@@ -1,16 +1,6 @@
 import { prisma } from "../../lib/prisma.js";
 import type { Request, Response } from "express";
 
-/**
- * Get all members with optional search and filter
- * Query params:
- * - search: search by name, email, or phone
- * - department: filter by department
- * - college: filter by college name
- * - year: filter by year of study
- * - tShirtSize: filter by t-shirt size
- * - hasTeam: filter by team status (true/false)
- */
 export const getAllMembers = async (req: Request, res: Response) => {
     try {
         const {
@@ -22,10 +12,8 @@ export const getAllMembers = async (req: Request, res: Response) => {
             hasTeam
         } = req.query;
 
-        // Build where clause dynamically
         const where: any = {};
 
-        // Search across name, email, and phone
         if (search && typeof search === 'string') {
             where.OR = [
                 { name: { contains: search, mode: 'insensitive' } },
@@ -34,17 +22,14 @@ export const getAllMembers = async (req: Request, res: Response) => {
             ];
         }
 
-        // Filter by department
         if (department && typeof department === 'string') {
             where.department = { contains: department, mode: 'insensitive' };
         }
 
-        // Filter by college
         if (college && typeof college === 'string') {
             where.college_name = { contains: college, mode: 'insensitive' };
         }
 
-        // Filter by year of study
         if (year) {
             const yearNum = Number(year);
             if (!isNaN(yearNum)) {
@@ -52,12 +37,10 @@ export const getAllMembers = async (req: Request, res: Response) => {
             }
         }
 
-        // Filter by t-shirt size
         if (tShirtSize && typeof tShirtSize === 'string') {
             where.tShirtSize = tShirtSize;
         }
 
-        // Filter by team status
         if (hasTeam !== undefined) {
             if (hasTeam === 'true') {
                 where.teamId = { not: null };
@@ -89,9 +72,7 @@ export const getAllMembers = async (req: Request, res: Response) => {
     }
 };
 
-/**
- * Get unique filter values for dropdowns
- */
+
 export const getMemberFilters = async (req: Request, res: Response) => {
     try {
         const [departments, colleges, years, tShirtSizes] = await Promise.all([

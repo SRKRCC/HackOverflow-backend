@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { verifyToken } from "../utils/jwtService.js";
+import { getAdminById } from "../services/adminService.js";
 
 export interface JwtPayload {
   adminId?: number;
@@ -45,8 +46,26 @@ export const authenticateAdmin = (
       return res.status(403).json({ error: "No rights to access this route" });
     }
 
-    req.user = decoded;
-    next();
+    if (!decoded.adminId) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+
+    void (async () => {
+      try {
+        const admin = await getAdminById(decoded.adminId || -1);
+        if (!admin) {
+          res.status(404).json({ error: "Admin not found" });
+          return;
+        }
+        req.user = decoded;
+        next();
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to verify admin" });
+      }
+    })();
+
+    return;
   } catch (error: any) {
     if (error.name === "TokenExpiredError") {
       return res.status(401).json({ error: "Token expired, please log in again" });
