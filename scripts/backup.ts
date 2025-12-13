@@ -5,24 +5,18 @@ import { execSync } from 'child_process';
 
 const prisma = new PrismaClient();
 
-interface BackupData {
-  timestamp: string;
-  teamCount: number;
-  memberCount: number;
-  psCount: number;
-  teams: any[];
-  problemStatements: any[];
-}
-
 async function backup() {
   try {
     console.log('Starting backup process...');
 
-    // Fetch all data
     const teams = await prisma.team.findMany({
       include: {
         team_members: true,
-        problem_statement: true,
+        problem_statement: {
+          select: {
+            id: true,
+          },
+        },
         tasks: true,
       },
     });
@@ -33,27 +27,31 @@ async function backup() {
       },
     });
 
-    // Prepare backup data
-    const backupData: BackupData = {
+    const teamsBackupData = {
       timestamp: new Date().toISOString(),
       teamCount: teams.length,
       memberCount: teams.reduce((sum, team) => sum + team.team_members.length, 0),
-      psCount: problemStatements.length,
       teams,
+    };
+
+    const psBackupData = {
+      timestamp: new Date().toISOString(),
+      psCount: problemStatements.length,
       problemStatements,
     };
 
-    // Create filename with date
     const date = new Date().toISOString().split('T')[0];
-    const filename = `backup-${date}.json`;
-    const filepath = path.join(process.cwd(), filename);
+    const teamsFilename = `backup-teams-${date}.json`;
+    const psFilename = `backup-ps.json`;
+    const teamsFilepath = path.join(process.cwd(), teamsFilename);
+    const psFilepath = path.join(process.cwd(), psFilename);
 
-    // Write JSON file
-    fs.writeFileSync(filepath, JSON.stringify(backupData, null, 2));
-    console.log(`Backup created: ${filename}`);
-    console.log(`Stats: ${backupData.teamCount} teams, ${backupData.memberCount} members`);
+    fs.writeFileSync(teamsFilepath, JSON.stringify(teamsBackupData, null, 2));
+    fs.writeFileSync(psFilepath, JSON.stringify(psBackupData, null, 2));
+    console.log(`Teams backup created: ${teamsFilename}`);
+    console.log(`Problem statements backup created: ${psFilename}`);
+    console.log(`Stats: ${teamsBackupData.teamCount} teams, ${teamsBackupData.memberCount} members, ${psBackupData.psCount} problem statements`);
 
-    // Git operations if running in CI
     if (process.env.CI) {
       console.log('Pushing to backup repository...');
       
@@ -74,17 +72,19 @@ async function backup() {
         execSync(`git clone ${repoWithToken} ${backupDir}`);
       }
 
-      fs.copyFileSync(filepath, path.join(backupDir, filename));
+      fs.copyFileSync(teamsFilepath, path.join(backupDir, teamsFilename));
+      fs.copyFileSync(psFilepath, path.join(backupDir, psFilename));
       
       process.chdir(backupDir);
       execSync('git add .');
-      execSync(`git commit -m "Backup: ${date} - ${backupData.teamCount} teams, ${backupData.memberCount} members"`);
+      execSync(`git commit -m "Backup: ${date} - ${teamsBackupData.teamCount} teams, ${teamsBackupData.memberCount} members, ${psBackupData.psCount} problem statements"`);
       execSync('git push');
       
       console.log('Backup pushed to GitHub successfully!');
     } else {
       console.log('Running locally - skipping git push');
-      console.log(`Backup saved to: ${filepath}`);
+      console.log(`Teams backup saved to: ${teamsFilepath}`);
+      console.log(`Problem statements backup saved to: ${psFilepath}`);
     }
 
     await prisma.$disconnect();
