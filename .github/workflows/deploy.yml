@@ -92,7 +92,8 @@ jobs:
               CloudinaryAPISecret="${{ secrets.CLOUDINARY_API_SECRET }}" \
               EmailUser="${{ secrets.EMAIL_USER }}" \
               EmailPass="${{ secrets.EMAIL_PASS }}" \
-              FromEmail="${{ secrets.FROM_EMAIL }}"
+              FromEmail="${{ secrets.FROM_EMAIL }}" \
+              ReSendApiKey="${{ secrets.RESEND_API_KEY }}"
 
       - name: Deployment completed
         run: |

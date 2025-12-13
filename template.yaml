@@ -37,6 +37,10 @@ Parameters:
   FromEmail:
     Type: String
     Description: From email address for sending emails
+  ReSendApiKey:
+    Type: String
+    Description: Resend API Key for sending emails
+    NoEcho: true
 
 Resources:
   # REST API Gateway with explicit stage configuration
@@ -73,6 +77,7 @@ Resources:
           EMAIL_USER: !Ref EmailUser
           EMAIL_PASS: !Ref EmailPass
           FROM_EMAIL: !Ref FromEmail
+          RESEND_API_KEY: !Ref ReSendApiKey
           AWS_LAMBDA_NODEJS_DISABLE_CALLBACK_WARNING: true
           
       Policies:

@@ -1,140 +1,15 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import dotenv from 'dotenv';
+import { 
+  generateRegistrationEmailHTML,
+  type TeamData,
+  type MemberData,
+  type ProblemStatementData
+} from './emailTemplates.js';
 
 dotenv.config();
 
-const WHATSAPP_GROUP_URL = 'https://chat.whatsapp.com/GUg1kFD0let90x7LCA3amy';
-
-interface TeamData {
-  title: string;
-  scc_id?: string | null;
-  scc_password?: string | null;
-}
-
-interface MemberData {
-  name: string;
-  email: string;
-  phone_number?: string;
-}
-
-interface ProblemStatementData {
-  psId: string;
-  title: string;
-  description: string;
-  category: string;
-  isCustom?: boolean;
-}
-
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: parseInt('587'),
-    secure: false,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-};
-
-const generateHTMLTemplate = (
-  team: TeamData,
-  members: MemberData[],
-  problemStatement: ProblemStatementData,
-  leadEmail: string
-): string => {
-  const membersList = members
-    .map(
-      (member, index) =>
-        `<tr>
-          <td style="padding: 8px; border-bottom: 1px solid #eee;">${index + 1}</td>
-          <td style="padding: 8px; border-bottom: 1px solid #eee;">${member.name}</td>
-          <td style="padding: 8px; border-bottom: 1px solid #eee;">${member.email}</td>
-          <td style="padding: 8px; border-bottom: 1px solid #eee;">${member.phone_number || 'Not provided'}</td>
-        </tr>`
-    )
-    .join('');
-
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>HackOverflow - Registration Successful</title>
-    </head>
-    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-        <h1 style="color: white; margin: 0; text-align: center;">🎉 Registration Successful!</h1>
-        <p style="color: white; text-align: center; margin: 10px 0 0 0;">Welcome to HackOverflow 2025</p>
-      </div>
-
-      <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-        <h2 style="margin-top: 0; color: #495057;">Team Details</h2>
-        <table style="width: 100%; border-collapse: collapse;">
-          <tr>
-            <td style="padding: 8px 0; font-weight: bold;">Team Name:</td>
-            <td style="padding: 8px 0;">${team.title}</td>
-          </tr>
-          ${team.scc_id ? `
-          <tr>
-            <td style="padding: 8px 0; font-weight: bold;">SCC ID:</td>
-            <td style="padding: 8px 0;">${team.scc_id}</td>
-          </tr>
-          ` : ''}
-          <tr>
-            <td style="padding: 8px 0; font-weight: bold;">Problem Statement:</td>
-            <td style="padding: 8px 0;">
-              <strong>${problemStatement.psId}</strong> - ${problemStatement.title}
-              ${problemStatement.isCustom ? '<br><em>(Custom Problem Statement)</em>' : ''}
-            </td>
-          </tr>
-        </table>
-      </div>
-
-      <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-        <h2 style="margin-top: 0; color: #495057;">Team Members</h2>
-        <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 4px; overflow: hidden;">
-          <thead>
-            <tr style="background: #6c757d; color: white;">
-              <th style="padding: 12px 8px; text-align: left;">#</th>
-              <th style="padding: 12px 8px; text-align: left;">Name</th>
-              <th style="padding: 12px 8px; text-align: left;">Email</th>
-              <th style="padding: 12px 8px; text-align: left;">Phone</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${membersList}
-          </tbody>
-        </table>
-      </div>
-
-      <div style="background: #e7f3ff; padding: 20px; border-radius: 8px; border-left: 4px solid #0066cc;">
-        <h3 style="margin-top: 0; color: #0066cc;">Next Steps</h3>
-        <ul style="margin: 10px 0; padding-left: 20px;">
-          <li>Keep this email for your records</li>
-          <li>Join our WhatsApp group for quick updates: <a href="${WHATSAPP_GROUP_URL}" style="color: #667eea;">Join WhatsApp Group</a></li>
-          <li>Check our website for event schedule and rules</li>
-          <li>Prepare for the hackathon - it's going to be amazing! 🚀</li>
-          <li style="color:#C62828; font-weight:bold; margin-top:8px;">If you face any payment issues, call <a href="tel:9032149776" style="color: #667eea;">9032149776</a> or visit the registration page and use the payment help option.</li>
-          <li style="color:#C62828; font-weight:bold;">If money is debited, please do not attempt payment again, contact the organizers for assistance.</li>
-          <li style="color:#28a745; font-weight:bold; background-color: #d4edda; padding: 10px; border-radius: 4px; margin-top: 8px;">If payment is done, kindly reply to this email with your payment receipts and team size (count of members and count of affiliates).</li>
-        </ul>
-      </div>
-
-      <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
-        <p style="color: #6c757d; margin: 0;">
-          Need help? Contact us at <a href="mailto:srkrcodingclubofficial@gmail.com" style="color: #667eea;">srkrcodingclubofficial@gmail.com</a>
-        </p>
-        <p style="color: #6c757d; margin: 10px 0 0 0; font-size: 14px;">
-          HackOverflow 2025 - Organized by SRKR Coding Club
-        </p>
-      </div>
-    </body>
-    </html>
-  `;
-};
-
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendRegistrationEmail = async (
   team: TeamData,
@@ -144,11 +19,7 @@ export const sendRegistrationEmail = async (
 ): Promise<boolean> => {
   console.log('\n[EMAIL] Starting email send process...');
   console.log('[EMAIL] Environment check:', {
-    hasUser: !!process.env.EMAIL_USER,
-    hasPass: !!process.env.EMAIL_PASS,
-    hasFromEmail: !!process.env.FROM_EMAIL,
-    smtpHost: process.env.SMTP_HOST,
-    smtpPort: process.env.SMTP_PORT
+    hasResendKey: !!process.env.RESEND_API_KEY
   });
   
   try {
@@ -161,51 +32,37 @@ export const sendRegistrationEmail = async (
       return false;
     }
 
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      console.error('[EMAIL] Email credentials not configured in environment variables');
+    if (!process.env.RESEND_API_KEY) {
+      console.error('[EMAIL] RESEND_API_KEY not configured in environment variables');
       return false;
     }
 
     console.log('[EMAIL] Generating HTML template...');
-    const htmlContent = generateHTMLTemplate(team, members, problemStatement, recipientEmail);
+    const htmlContent = generateRegistrationEmailHTML(team, members, problemStatement, recipientEmail);
     console.log('[EMAIL] HTML template generated successfully, length:', htmlContent.length);
 
-    console.log('[EMAIL] Creating transporter...');
-    const transporter = createTransporter();
-    console.log('[EMAIL] Transporter created');
-
-    console.log('[EMAIL] Verifying transporter connection...');
-    await transporter.verify();
-    console.log('[EMAIL] Transporter verified successfully');
-
-    const fromEmail = process.env.FROM_EMAIL || "srkrcodingclubofficial@gmail.com";
-
-    console.log('[EMAIL] Preparing mail options...');
-    const mailOptions = {
-      from: `"HackOverflow 2025" <${fromEmail}>`,
+    console.log('[EMAIL] Sending email via Resend...');
+    const { data, error } = await resend.emails.send({
+      from: 'HackOverflow <notifications@info.srkrcodingclub.in>',
       to: recipientEmail,
+      cc: 'srkrcodingclubofficial@gmail.com',
       subject: `Registration Successful - Team ${team.title} | HackOverflow 2025`,
       html: htmlContent,
-    };
-    console.log('[EMAIL] Mail options:', {
-      from: mailOptions.from,
-      to: mailOptions.to,
-      subject: mailOptions.subject,
-      htmlLength: mailOptions.html.length
     });
 
-    console.log('[EMAIL] Sending email...');
-    const info = await transporter.sendMail(mailOptions);
+    if (error) {
+      console.error('[EMAIL] Resend error:', error);
+      return false;
+    }
+
     console.log('[EMAIL] Email sent successfully!');
-    console.log('[EMAIL] Message ID:', info.messageId);
-    console.log('[EMAIL] Response:', info.response);
+    console.log('[EMAIL] Message ID:', data?.id);
     
     return true;
   } catch (error: any) {
     console.error('[EMAIL] Failed to send email');
     console.error('[EMAIL] Error type:', error.constructor.name);
     console.error('[EMAIL] Error message:', error.message);
-    console.error('[EMAIL] Error code:', error.code);
     console.error('[EMAIL] Error stack:', error.stack);
     return false;
   }
