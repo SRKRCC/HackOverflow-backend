@@ -6,6 +6,7 @@ import taskRoutes from './adminRoutes/taskRoutes.js';
 import psRoutes from './adminRoutes/psRoutes.js';
 import announcementRoutes from './adminRoutes/announcementRoutes.js';
 import galleryRoutes from './adminRoutes/galleryRoutes.js';
+import adminMemberRoutes from './adminRoutes/adminMemberRoutes.js';
 import { adminLogout } from '../controllers/authControllers.js';
 import { authenticateAdmin } from '../middlewares/authenticateAdmin.js';
 
@@ -17,6 +18,7 @@ router.use('/tasks', taskRoutes);
 router.use('/problem-statements', psRoutes);
 router.use('/announcements', announcementRoutes);
 router.use('/gallery', galleryRoutes);
+router.use('/members', adminMemberRoutes);
 router.post('/logout', authenticateAdmin, adminLogout);
 
 export default router;
