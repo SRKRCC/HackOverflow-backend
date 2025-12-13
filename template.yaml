@@ -78,6 +78,7 @@ Resources:
           EMAIL_PASS: !Ref EmailPass
           FROM_EMAIL: !Ref FromEmail
           RESEND_API_KEY: !Ref ReSendApiKey
+          EMAIL_QUEUE_URL: !Ref HackOverflowEmailQueue
           AWS_LAMBDA_NODEJS_DISABLE_CALLBACK_WARNING: true
           
       Policies:
@@ -86,8 +87,10 @@ Resources:
               Action:
                 - firehose:PutRecord
                 - firehose:PutRecordBatch
+                - sqs:SendMessage
               Resource:
                 - arn:aws:firehose:ap-south-1:161266029104:deliverystream/hackoverflow-audit-log-stream
+                - !GetAtt HackOverflowEmailQueue.Arn
 
       Events:
         ApiEvent:
@@ -159,6 +162,13 @@ Resources:
         EncryptionConfiguration:
           KMSEncryptionConfig:
             AWSKMSKeyARN: arn:aws:kms:ap-south-1:161266029104:key/aa69749c-3817-4b52-b3ef-a1ece512d06d
+  
+  HackOverflowEmailQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: hackoverflow-email-queue
+      VisibilityTimeout: 60
+  
 
 Outputs:
   ApiUrl:
