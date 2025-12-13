@@ -6,6 +6,7 @@ import {
   type MemberData,
   type ProblemStatementData
 } from './emailTemplates.js';
+import { auditService } from '../services/auditService.js';
 
 dotenv.config();
 
@@ -41,22 +42,51 @@ export const sendRegistrationEmail = async (
     const htmlContent = generateRegistrationEmailHTML(team, members, problemStatement, recipientEmail);
     console.log('[EMAIL] HTML template generated successfully, length:', htmlContent.length);
 
+    const subject = `Registration Successful - Team ${team.title} | HackOverflow 2025`;
+
     console.log('[EMAIL] Sending email via Resend...');
     const { data, error } = await resend.emails.send({
       from: 'HackOverflow Team <notifications@info.srkrcodingclub.in>',
       to: recipientEmail,
       cc: 'srkrcodingclubofficial@gmail.com',
-      subject: `Registration Successful - Team ${team.title} | HackOverflow 2025`,
+      subject: subject,
       html: htmlContent,
     });
 
     if (error) {
       console.error('[EMAIL] Resend error:', error);
+      
+      await auditService.logEmail(
+        'SEND_EMAIL',
+        false,
+        { team_id: team.scc_id || "" },
+        recipientEmail,
+        subject,
+        {
+          team_name: team.title,
+          problem_statement: problemStatement.psId,
+          error: error.message
+        }
+      );
+      
       return false;
     }
 
     console.log('[EMAIL] Email sent successfully!');
     console.log('[EMAIL] Message ID:', data?.id);
+    
+    await auditService.logEmail(
+      'SEND_EMAIL',
+      true,
+      { team_id: team.scc_id || "" },
+      recipientEmail,
+      subject,
+      {
+        team_name: team.title,
+        problem_statement: problemStatement.psId,
+        message_id: data?.id
+      }
+    );
     
     return true;
   } catch (error: any) {
