@@ -130,14 +130,30 @@ export const getStatements = async (req: Request, res: Response) => {
   try {
     const isAdmin = (req as any).user?.role === "admin";
 
-    const query: any = { select: statementSelect };
+    const query: any = { 
+      select: {
+        ...statementSelect,
+        _count: {
+          select: {
+            Team: true
+          }
+        }
+      }
+    };
     if (!isAdmin) {
       query.where = { isCustom: false };
     }
 
     const statements = await prisma.problemStatement.findMany(query);
+    
+    // Transform the data to include teamCount
+    const transformedStatements = statements.map((statement: any) => ({
+      ...statement,
+      teamCount: statement._count.Team,
+      _count: undefined
+    }));
 
-    res.json({ message: "Problem Statements fetched successfully", data: statements });
+    res.json({ message: "Problem Statements fetched successfully", data: transformedStatements });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
