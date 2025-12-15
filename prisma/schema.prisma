@@ -19,63 +19,50 @@ model Member {
   year_of_study Int?
   location      String?
   attendance    Int     @default(0)
+  teamId        Int?
   tShirtSize    String?
-
-  // Relation
-  teamId Int?
-  team   Team? @relation(fields: [teamId], references: [id])
+  team          Team?   @relation(fields: [teamId], references: [id])
 }
 
 model Team {
-  id                  Int               @id @default(autoincrement())
-  scc_id              String?
-  scc_password        String?
-  title               String
-  problem_statement   ProblemStatement @relation(fields: [ps_id], references: [id])
-  ps_id               Int
-  gallery_images      String[] // Store multiple image URLs
-  paymentVerified     Boolean  @default(false) // Admin verification status
-
-  // Relations
-  team_members Member[]
-  tasks        Task[]
+  id                Int              @id @default(autoincrement())
+  scc_id            String?
+  scc_password      String?
+  title             String
+  ps_id             Int
+  gallery_images    String[]
+  paymentVerified   Boolean          @default(false)
+  team_members      Member[]
+  tasks             Task[]
+  problem_statement ProblemStatement @relation(fields: [ps_id], references: [id])
 }
 
 model ProblemStatement {
-  id          Int    @id @default(autoincrement())
-  psId        String @unique
+  id          Int      @id @default(autoincrement())
+  psId        String   @unique
   title       String
   description String
   category    String
   tags        String[]
-  isCustom   Boolean @default(false)
-
-  Team Team[]
-}
-
-enum TaskStatus {
-  Pending
-  InReview
-  Completed
+  isCustom    Boolean  @default(false)
+  Team        Team[]
 }
 
 model Task {
-  id          Int      @id @default(autoincrement())
+  id          Int        @id @default(autoincrement())
   title       String
   description String?
-  difficulty  String? // could be "easy", "medium", "hard"
+  difficulty  String?
   round_num   Int
-  points      Int      @default(0)
-  status      TaskStatus @default(Pending)
-  completed   Boolean  @default(false)
-  in_review   Boolean  @default(false)
-  timestamp   DateTime @default(now())
-  teamNotes   String?
+  points      Int        @default(0)
+  completed   Boolean    @default(false)
+  in_review   Boolean    @default(false)
+  timestamp   DateTime   @default(now())
+  teamId      Int
   reviewNotes String?
-  
-  // Relation
-  teamId Int
-  team   Team @relation(fields: [teamId], references: [id])
+  status      TaskStatus @default(Pending)
+  teamNotes   String?
+  team        Team       @relation(fields: [teamId], references: [id])
 }
 
 model Admin {
@@ -83,7 +70,6 @@ model Admin {
   email    String @unique
   password String
 }
-
 
 model Announcement {
   id          Int      @id @default(autoincrement())
@@ -95,7 +81,7 @@ model Announcement {
 
 model DeletedMember {
   id               Int      @id @default(autoincrement())
-  original_id      Int      // Original member ID
+  original_id      Int
   name             String
   email            String
   phone_number     String
@@ -107,8 +93,14 @@ model DeletedMember {
   attendance       Int      @default(0)
   tShirtSize       String?
   teamId           Int?
-  team_title       String?  // Store team name for reference
+  team_title       String?
   deleted_at       DateTime @default(now())
-  deleted_by_admin String?  // Admin who deleted the member
-  deletion_reason  String?  // Optional reason for deletion
+  deleted_by_admin String?
+  deletion_reason  String?
+}
+
+enum TaskStatus {
+  Pending
+  InReview
+  Completed
 }

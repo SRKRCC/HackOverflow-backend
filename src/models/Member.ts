@@ -10,6 +10,10 @@ export interface Member {
   location?: string | null;
   attendance: number;
 
+  certification_name?: string | null;
+  roll_number?: string | null;
+  gender?: 'MALE' | 'FEMALE' | null;
+
   // Relations
   teamId?: number | null;
   team?: Team | null;
