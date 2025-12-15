@@ -8,20 +8,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Gender {
+  Male
+  Female
+}
+
 model Member {
-  id            Int     @id @default(autoincrement())
-  name          String
-  email         String  @unique
-  phone_number  String
-  profile_image String?
-  department    String?
-  college_name  String
-  year_of_study Int?
-  location      String?
-  attendance    Int     @default(0)
-  teamId        Int?
-  tShirtSize    String?
-  team          Team?   @relation(fields: [teamId], references: [id])
+  id                 Int     @id @default(autoincrement())
+  name               String
+  email              String  @unique
+  phone_number       String
+  profile_image      String?
+  department         String?
+  college_name       String
+  year_of_study      Int?
+  location           String?
+  attendance         Int     @default(0)
+  teamId             Int?
+  tShirtSize         String?
+  certification_name String?
+  roll_number        String?
+  gender             Gender?
+  team               Team?   @relation(fields: [teamId], references: [id])
 }
 
 model Team {

@@ -3,16 +3,21 @@ import { Prisma } from '@prisma/client';
 import type { Request, Response } from "express";
 
 export const getDetails = async (req: Request, res: Response) => {
-    const teamIdParam = req.params.teamId;
+    const teamId: number = (req as any).user.teamId || Number(req.params.teamId);
 
-    if (!teamIdParam) {
-        return res.status(400).json({ error: "teamId is missing" });
+    if (!teamId) {
+        return res.status(400).json({ error: "Team ID is missing" });
     }
+    // const teamIdParam = req.params.teamId;
 
-    const teamId = Number(teamIdParam);
-    if (!Number.isFinite(teamId) || Number.isNaN(teamId)) {
-        return res.status(400).json({ error: "teamId must be a valid number" });
-    }
+    // if (!teamIdParam) {
+    //     return res.status(400).json({ error: "teamId is missing" });
+    // }
+
+    // const teamId = Number(teamIdParam);
+    // if (!Number.isFinite(teamId) || Number.isNaN(teamId)) {
+    //     return res.status(400).json({ error: "teamId must be a valid number" });
+    // }
     try {
         const team = await prisma.team.findUnique({
             where: { id: teamId },
