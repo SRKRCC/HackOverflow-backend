@@ -206,6 +206,7 @@ export const getAllTeams = async (req: Request, res: Response) => {
             scc_id: team.scc_id,
             ps_id: team.problem_statement?.psId ?? team.ps_id ?? null,
             title: team.title,
+            category: team.problem_statement?.category ?? null,
             member_count: team.team_members.length ?? 0,
             paymentVerified: team.paymentVerified,
         }));
