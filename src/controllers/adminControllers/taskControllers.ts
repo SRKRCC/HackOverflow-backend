@@ -77,7 +77,68 @@ export const createTask = async (req: Request, res: Response) => {
 
 export const getTasks = async (req: Request, res: Response) => {
   try {
-    const tasks = await prisma.task.findMany({ include: { team: true } });
+    const teams = await prisma.team.findMany({
+      select: {
+        id: true,
+        scc_id: true,
+        title: true,
+        _count: {
+          select: { tasks: true }
+        }
+      },
+      orderBy: { id: 'asc' }
+    });
+    
+    const summary = teams.map(team => ({
+      teamId: team.id,
+      scc_id: team.scc_id,
+      title: team.title,
+      tasks_count: team._count.tasks
+    }));
+    
+    res.status(200).json(summary);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getTasksOverview = async (req: Request, res: Response) => {
+  try {
+    const limit = Math.max(1, Math.min(100, Number(req.query.limit ?? 5))); // sanitize
+    const [recentTasks, total, completed, inReview] = await Promise.all([
+      prisma.task.findMany({
+        orderBy: { timestamp: 'desc' },
+        take: limit,
+        include: { team: { select: { id: true, scc_id: true, title: true } } }
+      }),
+      prisma.task.count(),
+      prisma.task.count({ where: { completed: true } }),
+      prisma.task.count({ where: { in_review: true } }),
+    ]);
+
+    res.status(200).json({
+      recentTasks,
+      stats: { total, completed, in_review: inReview }
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getTasksByTeam = async (req: Request, res: Response) => {
+  try {
+    const { teamId } = req.params;
+    
+    if (!teamId) {
+      return res.status(400).json({ error: 'teamId is required' });
+    }
+    
+    const tasks = await prisma.task.findMany({
+      where: { teamId: Number(teamId) },
+      include: { team: { select: { id: true, scc_id: true, title: true } } },
+      orderBy: { timestamp: 'desc' }
+    });
+    
     res.json(tasks);
   } catch (error: any) {
     res.status(500).json({ error: error.message });

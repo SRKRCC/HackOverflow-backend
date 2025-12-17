@@ -6,7 +6,9 @@ import {
   updateTask,
   deleteTask,
   completeTask,
-  moveTaskToPending
+  moveTaskToPending,
+  getTasksByTeam,
+  getTasksOverview
 } from "../../controllers/adminControllers/taskControllers.js";
 import { authenticateAdmin } from "../../middlewares/authenticateAdmin.js";
 
@@ -16,6 +18,8 @@ router.use(authenticateAdmin);
 
 router.post("/", createTask);
 router.get("/", getTasks);
+router.get("/overview", getTasksOverview);
+router.get("/team/:teamId", getTasksByTeam);
 router.get("/:id", getTaskById);
 router.put("/:id", updateTask);
 router.delete("/:id", deleteTask);
