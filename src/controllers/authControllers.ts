@@ -4,6 +4,7 @@ import type { Request, Response } from "express";
 import { verifyPasswordHash, generateToken, generatePasswordHash } from "../utils/jwtService.js";
 import { auditService } from '../services/auditService.js';
 import { createAuditContext } from '../utils/auditHelpers.js';
+import { verifyHash } from "../utils/password.js";
 
 dotenv.config();
 
@@ -49,16 +50,24 @@ export const login = async (req: Request, res: Response) => {
         }
       }
     } else {
-      user = await prisma.team.findFirst({ where: { scc_id: username } });
-      if (user && user.scc_password) {
+      const team = await prisma.team.findFirst({ where: { scc_id: username } });
+      if (team && team.scc_password) {
         try {
-          const isPasswordValid = password === user.scc_password;
-          if (isPasswordValid) {
-            userRole = "team";
+          const isPasswordValid = await verifyHash(password, team.scc_password);
+
+          if (!isPasswordValid) {
+            return res.status(400).json({ error: "Invalid credentials" });
           }
-        } catch (error) {
+          
+          user = team;
+          userRole = "team";
+        }
+        catch (error) {
           return res.status(500).json({ error: "Internal server error, Please try again" });
         }
+      }
+      else {
+        return res.status(400).json({ error: "Invalid credentials" });
       }
     }
 

@@ -6,6 +6,7 @@ import crypto from 'crypto';
 import type { PrismaClient } from '@prisma/client';
 import { logEmailEvent, createAuditContext } from '../../utils/auditHelpers.js';
 import { auditService } from '../../services/auditService.js';
+import { generateHash, generateRandomPassword } from '../../utils/password.js';
 
 export const registerTeam = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -88,7 +89,6 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
 
       let problemStatement;
       if (registrationData.problemStatement.isCustom) {
-        // Count existing custom problem statements to generate sequential ID
         const customPsCount = await txClient.problemStatement.count({
           where: { isCustom: true }
         });
@@ -120,12 +120,13 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
       }
 
       const sccId = await generateSccId(txClient);
-      const sccPassword = generateSccPassword();
+      const sccPasswordPlain = generateRandomPassword();
+      const sccPasswordHash = await generateHash(sccPasswordPlain);
 
       const team = await txClient.team.create({
         data: {
           scc_id: sccId,
-          scc_password: sccPassword,
+          scc_password: sccPasswordHash,
           title: registrationData.teamName,
           ps_id: problemStatement.id,
           gallery_images: [],
@@ -181,7 +182,7 @@ export const registerTeam = async (req: Request, res: Response): Promise<void> =
       return {
         teamId: team.id,
         sccId: sccId,
-        sccPassword: sccPassword,
+        sccPassword: sccPasswordHash,
         team: team,
         problemStatement: problemStatement,
         allMembers: registrationData.members
