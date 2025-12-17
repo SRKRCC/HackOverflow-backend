@@ -11,6 +11,7 @@ export interface Task {
     difficulty?: "easy" | "medium" | "hard" | null;
     round_num: number;
     points: number;
+    points_earned?: number | null;
     status: TaskStatus;
     completed: boolean;
     teamNotes?: string;

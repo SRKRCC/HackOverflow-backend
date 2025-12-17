@@ -4,7 +4,6 @@ import type { Request, Response } from "express";
 import { auditService } from '../../services/auditService.js';
 import { createAuditContext } from '../../utils/auditHelpers.js';
 
-// Get tasks assigned to a specific team
 export const getTeamTasks = async (req: Request, res: Response) => {
   try {
     const teamId = (req as any).user.teamId;
@@ -21,13 +20,14 @@ export const getTeamTasks = async (req: Request, res: Response) => {
       orderBy: { timestamp: 'desc' }
     });
     
-    res.json(tasks);
+    const sanitizedTasks = tasks.map(({ points_earned, ...task }) => task);
+    
+    res.json(sanitizedTasks);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
 
-// Team submits task for review
 export const submitTaskForReview = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -71,12 +71,14 @@ export const submitTaskForReview = async (req: Request, res: Response) => {
     });
     
     res.json({ message: 'Task submitted for review successfully', task: updatedTask });
+    const { points_earned, ...sanitizedTask } = updatedTask;
+    
+    res.json({ message: 'Task submitted for review successfully', task: sanitizedTask });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
 
-// Get task details for a specific task
 export const getTaskById = async (req: Request, res: Response) => {
   try {
     const teamId = (req as any).user.teamId;
@@ -104,7 +106,9 @@ export const getTaskById = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Task not found' });
     }
     
-    res.json(task);
+    const { points_earned, ...sanitizedTask } = task;
+    
+    res.json(sanitizedTask);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

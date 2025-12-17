@@ -33,7 +33,7 @@ export const fetchLeaderboard = async (): Promise<void> => {
       title: team.title,
       totalPoints: team.tasks
         .filter((task: any) => task.status === "Completed")
-        .reduce((sum: number, task: any) => sum + (task.points || 0), 0),
+        .reduce((sum: number, task: any) => sum + (task.points_earned ?? 0), 0),
       completedTasks: team.tasks.filter((task: any) => task.status === "Completed").length,
       rank: 0,
     }));

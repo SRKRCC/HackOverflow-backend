@@ -57,20 +57,21 @@ model ProblemStatement {
 }
 
 model Task {
-  id          Int        @id @default(autoincrement())
-  title       String
-  description String?
-  difficulty  String?
-  round_num   Int
-  points      Int        @default(0)
-  completed   Boolean    @default(false)
-  in_review   Boolean    @default(false)
-  timestamp   DateTime   @default(now())
-  teamId      Int
-  reviewNotes String?
-  status      TaskStatus @default(Pending)
-  teamNotes   String?
-  team        Team       @relation(fields: [teamId], references: [id])
+  id            Int        @id @default(autoincrement())
+  title         String
+  description   String?
+  difficulty    String?
+  round_num     Int
+  points        Int        @default(0)
+  points_earned Int?       @default(0)
+  completed     Boolean    @default(false)
+  in_review     Boolean    @default(false)
+  timestamp     DateTime   @default(now())
+  teamId        Int
+  reviewNotes   String?
+  status        TaskStatus @default(Pending)
+  teamNotes     String?
+  team          Team       @relation(fields: [teamId], references: [id])
 }
 
 model Admin {

@@ -20,12 +20,18 @@ export const getDetails = async (req: Request, res: Response) => {
     }
 
     try {
+        const include: any = {
+            team_members: true,
+            problem_statement: true,
+        };
+
+        if (!isAdmin) {
+            include.tasks = true;
+        }
+
         const team = await prisma.team.findUnique({
             where: { id: teamId },
-            include: {
-                team_members: true,
-                problem_statement: true,
-            },
+            include,
         });
 
         if (!team) {
@@ -36,6 +42,10 @@ export const getDetails = async (req: Request, res: Response) => {
             (a, b) => Number(a.id) - Number(b.id)
         );
 
+        const sanitizedTasks = !isAdmin && team.tasks 
+            ? team.tasks.map(({ points_earned, ...task }: any) => task)
+            : [];
+
         res.json({
             teamId: team.id,
             title: team.title,
@@ -44,6 +54,7 @@ export const getDetails = async (req: Request, res: Response) => {
             paymentVerified: team.paymentVerified,
             problem_statement: team.problem_statement ?? null,
             members: sortedMembers,
+            tasks: sanitizedTasks,
         });
     } catch (error) {
         console.error("Error fetching team members:", error);

@@ -201,3 +201,17 @@ export const updateGeneralInfo = async (req: Request, res: Response) => {
         res.status(500).json({ error: "Internal server error" });
     }
 }
+
+export const dashboardInfo = async (req: Request, res: Response) => {
+    try {
+        const teamId: number = (req as any).user.teamId;
+
+        if (!teamId) {
+            return res.status(400).json({ error: "Team ID is missing" });
+        }
+    }
+    catch (error) {
+        console.error("Error fetching Dashboard Information:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}
